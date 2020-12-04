@@ -1,6 +1,8 @@
 [package]
 name = "vex-rt"
 version = "0.1.0"
+description = "A Rust runtime for the Vex V5 built on top of PROS."
+license = "MIT OR Apache-2.0"
 authors = ["Timothy Morland <me@timothy-morland.com>"]
 repository = "https://github.com/thetimmorland/vex-rt"
 edition = "2018"
