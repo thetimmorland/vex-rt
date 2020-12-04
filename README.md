@@ -1,5 +1,7 @@
 # vex-rt
 
+![](https://img.shields.io/crates/v/vex-rt)
+
 A Rust runtime for the Vex V5 built on top of [PROS](https://pros.cs.purdue.edu/).
 
 ## Quickstart
