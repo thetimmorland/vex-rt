@@ -1,11 +1,12 @@
 #![no_std]
 
+extern crate alloc;
 use core::panic::PanicInfo;
 use libc_alloc::LibcAlloc;
 
 mod bindings;
 
-pub mod task;
+pub mod rtos;
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
