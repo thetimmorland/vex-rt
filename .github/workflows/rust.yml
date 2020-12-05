@@ -17,5 +17,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - run: sudo apt-get install gcc-arm-none-eabi
-    - run: cargo build --verbose
+    - run: cargo check --verbose
+    - run: cargo check --examples --verbose
 #   - run: cargo test --verbose
