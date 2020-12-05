@@ -17,6 +17,5 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - run: sudo apt-get install gcc-arm-none-eabi
-    - run: rustup component add rust-src
     - run: cargo build --verbose
 #   - run: cargo test --verbose
