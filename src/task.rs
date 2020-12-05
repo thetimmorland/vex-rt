@@ -8,3 +8,9 @@ pub fn sleep(dur: Duration) {
         rtos::delay(dur.as_millis().try_into().unwrap());
     }
 }
+
+pub fn time_since_start() -> Duration {
+    unsafe {
+        Duration::from_millis(rtos::millis().into())
+    }
+}
