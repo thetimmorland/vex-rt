@@ -29,4 +29,4 @@ cat > project.pros << EOL
 }
 EOL
 
-prosv5 ut --no-banner
+prosv5 ut

@@ -11,26 +11,45 @@ fn panic(_info: &PanicInfo) -> ! {
 #[global_allocator]
 static ALLOCATOR: LibcAlloc = LibcAlloc;
 
-static mut PERIPHERALS_TAKEN = false;
+extern "C" {
+    fn motor_move(port: u8, voltage: i8) -> i32;
+}
+
+pub struct SmartPort (u8);
+
+impl SmartPort {
+    pub fn as_motor(&self) -> Motor {
+        return Motor(self.0)
+    }
+}
+pub struct Motor (u8);
+
+impl Motor {
+    pub fn set_voltage(&self, voltage: i8) {
+        unsafe {
+            motor_move(self.0, voltage);
+        };
+    }
+}
 
 pub struct Peripherals {
-    PORT1: SmartPort;
-};
+    pub port1: SmartPort,
+}
+
+static mut PERIPHERALS_TAKEN: bool = false;
 
 impl Peripherals {
     pub fn take() -> Option<Self> {
-        if (PERIPHERALS_TAKEN) {
+        if unsafe { PERIPHERALS_TAKEN } {
             None
         } else {
-            Some(unsafe { Peripherals::take() })
+            Some(unsafe { Self::steal() })
         }
     }
 
-    pub fn unsafe steal() -> Self {
-        PERIPHERALS_TAKEN = true;
+    pub unsafe fn steal() -> Self {
+        Peripherals {
+            port1: SmartPort(1),
+        }
     }
-};
-
-pub static mut PERIPHERALS: Peripherals = Peripherals {
-    port1 = SmartPort {}
-};
+}
