@@ -7,7 +7,4 @@ use libc_print::libc_println;
 #[no_mangle]
 extern "C" fn initialize() {
     libc_println!("hello, world");
-
-    // busy wait to keep pros from printing anything
-    loop {}
 }
