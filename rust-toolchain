@@ -1,1 +1,4 @@
-nightly
+[toolchain]
+channel = "nightly-2020-11-25"
+components = [ "rust-src" ]
+targets = [ "armv7a-none-eabi" ]
