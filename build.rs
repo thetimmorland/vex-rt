@@ -102,5 +102,9 @@ fn main() {
     .unwrap();
     fs::copy("kernel/firmware/v5.ld", out.join("firmware/v5.ld")).unwrap();
 
+    // this is for linker to find linker scripts
     println!("cargo:rustc-link-search={}", out.display());
+
+    // this is for linker to find libraries
+    println!("cargo:rustc-link-search={}", out.join("firmware").display());
 }

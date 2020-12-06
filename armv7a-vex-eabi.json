@@ -12,7 +12,7 @@
     "gcc": [
         "-nostartfiles",
         "-nostdlib",
-        "-Wl,-Tv5.ld,--gc-sections",
+        "-Wl,-Tfirmware/v5.ld,--gc-sections",
         "-Wl,--allow-multiple-definition",
         "-Wl,--start-group,-lpros,-lc,-lm,-lgcc,-lstdc++,--end-group"
     ]
