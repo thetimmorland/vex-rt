@@ -19,8 +19,8 @@ pub struct SmartPort {
 }
 
 impl SmartPort {
-    pub fn as_motor(self) -> motor::Motor {
-        motor::Motor { port: self.port }
+    pub fn as_motor(self, gearset: motor::Gearset, is_reversed: bool) -> motor::Motor {
+        unsafe { motor::Motor::new(self.port, gearset, is_reversed) }
     }
 }
 
@@ -45,6 +45,7 @@ pub struct Peripherals {
     pub port18: SmartPort,
     pub port19: SmartPort,
     pub port20: SmartPort,
+    pub port21: SmartPort,
 }
 
 static mut PERIPHERALS_TAKEN: bool = false;
@@ -80,6 +81,7 @@ impl Peripherals {
             port18: SmartPort { port: 18 },
             port19: SmartPort { port: 19 },
             port20: SmartPort { port: 20 },
+            port21: SmartPort { port: 21 },
         }
     }
 }

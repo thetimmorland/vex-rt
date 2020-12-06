@@ -39,6 +39,7 @@ fn main() {
             .expect(err_msg)
     };
 
+    #[rustfmt::skip]
     // what we want is in stderr for some god-forsaken reason
     //
     // On my system it looks like this:
@@ -72,15 +73,15 @@ fn main() {
         .header("kernel/include/pros/motors.h")
         .whitelist_function("motor_.*")
         .whitelist_type("motor_.*")
+        .rustified_enum("motor_.*")
         .clang_arg("-target")
         .clang_arg("arm-none-eabi")
         .clang_args(&include_paths)
         .use_core()
         .ctypes_prefix("libc")
         .layout_tests(false)
-        .rustfmt_bindings(false)
         .generate()
-        .expect("Could not generate bindings. Concider setting C_INCLUDE_PATH");
+        .expect("Could not generate bindings.");
 
     bindings
         .write_to_file(out.join("bindings.rs"))
