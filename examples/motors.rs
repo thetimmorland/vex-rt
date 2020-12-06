@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-extern crate vex_rt;
+extern crate vex_rt as rt;
 
 #[no_mangle]
 extern "C" fn initialize() {

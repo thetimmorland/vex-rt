@@ -13,6 +13,8 @@ edition = "2018"
 libc = { version = "0.2", default-features = false }
 libc_alloc = "1.0.2"
 
+[build-dependencies]
+bindgen = "0.53.1"
+
 [dev-dependencies]
 libc-print = "0.1.14"
-# lvgl = { repository = "https://github.com/rafaelcaricio/lvgl-rs" }
