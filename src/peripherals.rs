@@ -1,13 +1,13 @@
 pub struct Peripherals {
-    pub port1: crate::SmartPort,
-    pub port2: crate::SmartPort,
-    pub port3: crate::SmartPort,
-    pub port4: crate::SmartPort,
-    pub port5: crate::SmartPort,
-    pub port6: crate::SmartPort,
-    pub port7: crate::SmartPort,
-    pub port8: crate::SmartPort,
-    pub port9: crate::SmartPort,
+    pub port01: crate::SmartPort,
+    pub port02: crate::SmartPort,
+    pub port03: crate::SmartPort,
+    pub port04: crate::SmartPort,
+    pub port05: crate::SmartPort,
+    pub port06: crate::SmartPort,
+    pub port07: crate::SmartPort,
+    pub port08: crate::SmartPort,
+    pub port09: crate::SmartPort,
     pub port10: crate::SmartPort,
     pub port11: crate::SmartPort,
     pub port12: crate::SmartPort,
@@ -25,6 +25,15 @@ pub struct Peripherals {
 static mut PERIPHERALS_TAKEN: bool = false;
 
 impl Peripherals {
+    /// Constructs a [`Peripherals`](/vex_rt/struct.Peripherals.html) struct
+    /// once. Panics if called multiple times.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use vex_rt as rt;
+    /// let peripherals = rt::Peripherals::take();
+    /// ```
     pub fn take() -> Self {
         if unsafe { PERIPHERALS_TAKEN } {
             panic!("Peripherals::take() can be called only once.")
@@ -36,17 +45,18 @@ impl Peripherals {
         }
     }
 
+    /// Constructs a `Peripherals` struct.
     pub unsafe fn steal() -> Self {
         Peripherals {
-            port1: crate::SmartPort::new(1),
-            port2: crate::SmartPort::new(2),
-            port3: crate::SmartPort::new(3),
-            port4: crate::SmartPort::new(4),
-            port5: crate::SmartPort::new(5),
-            port6: crate::SmartPort::new(6),
-            port7: crate::SmartPort::new(7),
-            port8: crate::SmartPort::new(8),
-            port9: crate::SmartPort::new(9),
+            port01: crate::SmartPort::new(1),
+            port02: crate::SmartPort::new(2),
+            port03: crate::SmartPort::new(3),
+            port04: crate::SmartPort::new(4),
+            port05: crate::SmartPort::new(5),
+            port06: crate::SmartPort::new(6),
+            port07: crate::SmartPort::new(7),
+            port08: crate::SmartPort::new(8),
+            port09: crate::SmartPort::new(9),
             port10: crate::SmartPort::new(10),
             port11: crate::SmartPort::new(11),
             port12: crate::SmartPort::new(12),
