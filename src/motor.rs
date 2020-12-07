@@ -1,6 +1,20 @@
 use crate::bindings;
 
-pub use crate::bindings::motor_gearset_e as Gearset;
+pub enum Gearset {
+    SixToOne,
+    EighteenToOne,
+    ThirtySixToOne,
+}
+
+impl Gearset {
+    fn to_motor_gearset_e_t(&self) -> bindings::motor_gearset_e_t {
+        match self {
+            Gearset::SixToOne => bindings::motor_gearset_e::E_MOTOR_GEARSET_06,
+            Gearset::EighteenToOne => bindings::motor_gearset_e::E_MOTOR_GEARSET_18,
+            Gearset::ThirtySixToOne => bindings::motor_gearset_e::E_MOTOR_GEARSET_36,
+        }
+    }
+}
 
 pub struct Motor {
     port: u8,
@@ -8,10 +22,10 @@ pub struct Motor {
 
 impl Motor {
     /// constructs a new motor unsafely. You probably want to use
-    /// `Peripherals::take().port1.as_motor(...)` instead.
+    /// [`crate::Peripherals::take()`] instead.
     pub unsafe fn new(port: u8, gearset: Gearset, reverse: bool) -> Motor {
         assert!((1..22).contains(&port));
-        bindings::motor_set_gearing(port, gearset);
+        bindings::motor_set_gearing(port, gearset.to_motor_gearset_e_t());
         bindings::motor_set_reversed(port, reverse);
         Motor { port }
     }
