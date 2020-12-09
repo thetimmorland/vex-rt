@@ -1,3 +1,5 @@
+/// A struct which represents all the peripherals on the V5 brain.
+
 pub struct Peripherals {
     pub port01: crate::SmartPort,
     pub port02: crate::SmartPort,
@@ -25,28 +27,37 @@ pub struct Peripherals {
 static mut PERIPHERALS_TAKEN: bool = false;
 
 impl Peripherals {
-    /// Constructs a [`Peripherals`](/vex_rt/struct.Peripherals.html) struct
-    /// once. Panics if called multiple times.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use vex_rt as rt;
-    /// let peripherals = rt::Peripherals::take();
-    /// ```
-    pub fn take() -> Self {
+    pub fn take() -> Option<Self> {
+        //! Constructs a [`Peripherals`] struct once.
+        //!
+        //! **Warning:** Panics if called multiple times.
+        //!
+        //! # Examples
+        //!
+        //! ```
+        //! use vex_rt as rt;
+        //! let peripherals = rt::Peripherals::take();
+        //! ```
+
         if unsafe { PERIPHERALS_TAKEN } {
-            panic!("Peripherals::take() can be called only once.")
+            None
         } else {
-            unsafe {
-                PERIPHERALS_TAKEN = true;
-                Self::steal()
-            }
+            Some(unsafe { Self::steal() })
         }
     }
 
-    /// Constructs a `Peripherals` struct.
     pub unsafe fn steal() -> Self {
+        //! Constructs a [`Peripherals`] struct unsafely.
+        //!
+        //! # Examples
+        //!
+        //! ```
+        //! use vex_rt as rt;
+        //! let peripherals = unsafe { rt::Peripherals::steal() };
+        //! ```
+
+        PERIPHERALS_TAKEN = true;
+
         Peripherals {
             port01: crate::SmartPort::new(1),
             port02: crate::SmartPort::new(2),
