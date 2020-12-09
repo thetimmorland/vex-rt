@@ -1,6 +1,6 @@
 [package]
 name = "vex-rt"
-version = "0.1.0"
+version = "0.1.1"
 description = "A Rust runtime for the Vex V5 built on top of PROS."
 license = "MIT OR Apache-2.0"
 authors = ["Timothy Morland <me@timothy-morland.com>"]
@@ -13,6 +13,8 @@ edition = "2018"
 libc = { version = "0.2", default-features = false }
 libc_alloc = "1.0.2"
 rcstring = "0.2.1"
+vex-rt-core = { path = "core", version = "0.1.0" }
+vex-rt-macros = { path = "macros", version = "0.1.0" }
 
 [dev-dependencies]
 libc-print = "0.1.14"
