@@ -9,6 +9,9 @@ use libc_print::std_name::*;
 struct Robot {}
 
 impl vex_rt::Robot for Robot {
+    fn initialize(peripherals: vex_rt::Peripherals) -> Robot {
+        Robot {}
+    }
     fn autonomous(&self) {}
     fn opcontrol(&self) {}
     fn disable(&self) {}
@@ -16,8 +19,8 @@ impl vex_rt::Robot for Robot {
 
 lazy_static! {
     static ref ROBOT: Robot = {
-        let p = vex_rt::Peripherals::take();
-        Robot {}
+        let peripherals = vex_rt::Peripherals::take();
+        Robot::initialize(peripherals)
     };
 }
 

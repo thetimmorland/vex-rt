@@ -10,12 +10,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+vex-rt-core = { path = "core", version = "0.1.0" }
 vex-rt-macros = { path = "macros", version = "0.1.0" }
-libc = { version = "0.2", default-features = false }
-libc_alloc = "1.0.2"
-libc-print = "0.1.14"
-
-[build-dependencies]
-bindgen = "0.53.1"
 
 [dev-dependencies]
+libc-print = "0.1.14"
