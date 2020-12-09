@@ -6,25 +6,34 @@ extern crate vex_rt;
 
 use libc_print::std_name::*;
 
+static mut ROBOT: Option<Robot> = None;
+
+#[derive(Debug)]
 struct Robot {}
 
-impl vex_rt::Robot for Robot {
-    fn initialize(peripherals: vex_rt::Peripherals) -> Robot {
+impl Robot {
+    fn initialize(_periph: vex_rt::Peripherals) -> Robot {
         Robot {}
     }
     fn autonomous(&self) {}
-    fn opcontrol(&self) {}
+    fn opcontrol(&self) {
+        println!("{:#?}", self)
+    }
     fn disable(&self) {}
 }
 
-lazy_static! {
-    static ref ROBOT: Robot = {
-        let peripherals = vex_rt::Peripherals::take();
-        Robot::initialize(peripherals)
-    };
+#[no_mangle]
+unsafe extern "C" fn initialize() {
+    let peripherals = vex_rt::Peripherals::steal();
+    ROBOT = Some(Robot::initialize(peripherals))
 }
 
 #[no_mangle]
-extern "C" fn initialize() {
-    let robot = robot;
+unsafe extern "C" fn opcontrol() {
+    ROBOT.as_mut().unwrap().opcontrol();
+}
+
+#[no_mangle]
+unsafe extern "C" fn autonomous() {
+    ROBOT.as_mut().unwrap().autonomous();
 }

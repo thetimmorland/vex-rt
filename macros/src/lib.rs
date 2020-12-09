@@ -1,5 +1,7 @@
 #![no_std]
 
+//! Do not use this crate on it's own
+
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::spanned::Spanned;
@@ -14,15 +16,15 @@ pub fn robot(_args: TokenStream, input: TokenStream) -> TokenStream {
     let expanded = quote! {
         #input
 
-        static mut __robot: #self_ty =;
+        static mut ROBOT: Option<#self_ty> = None;
 
         extern "C" fn initialize() {
             let peripherals = vex_rt::Peripherals::take();
-            __robot = #self_ty::initialize(peripherals);
+            ROBOT = Some(#self_ty::initialize(peripherals));
         }
 
         extern "C" fn autonomous() {
-            __robot.autonomous();
+            ROBOT.unwrap().autonomous();
         }
     };
 
