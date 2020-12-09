@@ -10,6 +10,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+vex-rt-macros = { path = "macros", version = "0.1.0" }
 libc = { version = "0.2", default-features = false }
 libc_alloc = "1.0.2"
 libc-print = "0.1.14"

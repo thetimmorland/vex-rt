@@ -1,5 +1,7 @@
 #![no_std]
 
+// extern crate vex_rt_macros as macros;
+
 use core::panic::PanicInfo;
 use libc_alloc::LibcAlloc;
 use libc_print::libc_println;
@@ -7,11 +9,14 @@ use libc_print::libc_println;
 mod bindings;
 mod motor;
 mod peripherals;
+mod robot;
 mod smart_port;
 
 pub use motor::*;
 pub use peripherals::*;
+pub use robot::*;
 pub use smart_port::*;
+pub use vex_rt_macros::*;
 
 #[panic_handler]
 fn panic(panic_info: &PanicInfo) -> ! {
