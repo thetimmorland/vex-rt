@@ -1,39 +1,24 @@
 #![no_std]
 #![no_main]
 
-#[macro_use]
 extern crate vex_rt;
 
-use libc_print::std_name::*;
+use libc_print::std_name::println;
 
-static mut ROBOT: Option<Robot> = None;
+struct Robot;
 
-#[derive(Debug)]
-struct Robot {}
-
+#[vex_rt::entry]
 impl Robot {
-    fn initialize(_periph: vex_rt::Peripherals) -> Robot {
-        Robot {}
+    fn initialize() -> Self {
+        Robot
     }
-    fn autonomous(&self) {}
+    fn autonomous(&self) {
+        println!("autonomous");
+    }
     fn opcontrol(&self) {
-        println!("{:#?}", self)
+        println!("opcontrol");
     }
-    fn disable(&self) {}
-}
-
-#[no_mangle]
-unsafe extern "C" fn initialize() {
-    let peripherals = vex_rt::Peripherals::steal();
-    ROBOT = Some(Robot::initialize(peripherals))
-}
-
-#[no_mangle]
-unsafe extern "C" fn opcontrol() {
-    ROBOT.as_mut().unwrap().opcontrol();
-}
-
-#[no_mangle]
-unsafe extern "C" fn autonomous() {
-    ROBOT.as_mut().unwrap().autonomous();
+    fn disable(&self) {
+        println!("disabled");
+    }
 }
