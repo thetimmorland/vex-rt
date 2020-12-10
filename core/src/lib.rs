@@ -8,12 +8,14 @@ use libc_alloc::LibcAlloc;
 use libc_print::libc_println;
 
 mod bindings;
+mod error;
 mod motor;
 mod peripherals;
 mod robot;
 mod rtos;
 mod smart_port;
 
+pub use error::*;
 pub use motor::*;
 pub use peripherals::*;
 pub use robot::*;
