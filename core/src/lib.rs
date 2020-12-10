@@ -28,7 +28,9 @@ fn panic(panic_info: &PanicInfo) -> ! {
         libc_println!("panic occurred!");
     }
 
-    loop {}
+    unsafe {
+        libc::exit(1);
+    }
 }
 
 #[global_allocator]
