@@ -51,7 +51,7 @@ fn main() {
     // End of search list.
 
     let mut in_include_section = false;
-    let mut include_paths: Vec<String> = Vec::new();
+    let mut include_paths: Vec<String> = vec!["-Ikernel/include".to_string()];
 
     let stderr = str::from_utf8(&output.stderr).expect("Could not read output of arm-none-eabi-gcc as utf-8. Create a Github issue if you see this.");
 
@@ -70,10 +70,14 @@ fn main() {
     //
 
     let bindings = bindgen::Builder::default()
-        .header("kernel/include/pros/motors.h")
+        .header("kernel/include/api.h")
         .whitelist_function("motor_.*")
+        .whitelist_function("task_.*")
+        .whitelist_function("millis")
         .whitelist_type("motor_.*")
+        .whitelist_type("task_.*")
         .rustified_enum("motor_.*")
+        .rustified_enum("task_.*")
         .clang_arg("-target")
         .clang_arg("arm-none-eabi")
         .clang_args(&include_paths)

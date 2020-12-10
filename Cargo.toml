@@ -11,8 +11,6 @@ edition = "2018"
 
 [dependencies]
 libc = { version = "0.2", default-features = false }
-libc_alloc = "1.0.2"
-rcstring = "0.2.1"
 vex-rt-core = { path = "core", version = "0.1.0" }
 vex-rt-macros = { path = "macros", version = "0.1.0" }
 

@@ -5,7 +5,7 @@ extern crate vex_rt as rt;
 
 use core::time::Duration;
 use libc_print::libc_println;
-use rt::rtos::Task;
+use rt::Task;
 
 #[no_mangle]
 extern "C" fn opcontrol() {
