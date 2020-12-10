@@ -71,6 +71,7 @@ fn main() {
 
     let bindings = bindgen::Builder::default()
         .header("kernel/include/api.h")
+        .whitelist_var(".*_DEFAULT")
         .whitelist_function("motor_.*")
         .whitelist_function("task_.*")
         .whitelist_function("millis")
