@@ -1,18 +1,16 @@
 #![no_std]
 #![no_main]
 
-#[macro_use]
 extern crate vex_rt;
-use vex_rt::Robot;
 
-use libc_print::std_name::*;
+use libc_print::std_name::println;
 
-struct MyRobot;
+struct Robot;
 
 #[vex_rt::entry]
-impl vex_rt::Robot for MyRobot {
+impl Robot {
     fn initialize() -> Self {
-        Self
+        Robot
     }
     fn autonomous(&self) {
         println!("autonomous");
