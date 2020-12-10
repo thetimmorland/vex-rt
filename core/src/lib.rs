@@ -14,6 +14,7 @@ mod peripherals;
 mod robot;
 mod rtos;
 mod smart_port;
+mod util;
 
 pub use error::*;
 pub use motor::*;
