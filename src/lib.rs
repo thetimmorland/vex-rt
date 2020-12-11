@@ -6,7 +6,7 @@ extern crate alloc;
 use core::panic::PanicInfo;
 use libc_print::libc_println;
 
-mod alloc;
+mod allocator;
 mod bindings;
 mod error;
 mod motor;
