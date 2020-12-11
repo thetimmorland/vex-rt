@@ -21,14 +21,14 @@ impl Task {
     }
 
     pub fn find_by_name(name: &str) -> Result<Task, Error> {
-        as_cstring(name, |cname| {
-            let ptr = unsafe { bindings::task_get_by_name(cname.into_raw()) };
-            if ptr == null_mut() {
-                todo!("Error")
-            } else {
-                Ok(Task(ptr))
-            }
-        })
+        let ptr = as_cstring(name, |cname| unsafe {
+            Ok(bindings::task_get_by_name(cname.into_raw()))
+        })?;
+        if ptr == null_mut() {
+            todo!("Error")
+        } else {
+            Ok(Task(ptr))
+        }
     }
 
     pub fn spawn<F>(f: F) -> Result<Task, Error>
