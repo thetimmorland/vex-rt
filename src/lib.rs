@@ -1,9 +1,10 @@
 #![no_std]
+#![feature(alloc_error_handler)]
 
 use core::panic::PanicInfo;
-use libc_alloc::LibcAlloc;
 use libc_print::libc_println;
 
+mod alloc;
 mod bindings;
 mod motor;
 mod peripherals;
@@ -27,6 +28,3 @@ fn panic(panic_info: &PanicInfo) -> ! {
 
     loop {}
 }
-
-#[global_allocator]
-static ALLOCATOR: LibcAlloc = LibcAlloc;
