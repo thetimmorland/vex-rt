@@ -30,7 +30,10 @@ impl Task {
         })
     }
 
-    pub fn spawn<F: FnOnce() + Send>(f: F) -> Result<Task, Error> {
+    pub fn spawn<F>(f: F) -> Result<Task, Error>
+    where
+        F: FnOnce() + Send + 'static,
+    {
         Task::spawn_ext(
             "",
             bindings::TASK_PRIORITY_DEFAULT,
@@ -39,12 +42,10 @@ impl Task {
         )
     }
 
-    pub fn spawn_ext<F: FnOnce() + Send>(
-        name: &str,
-        priority: u32,
-        stack_depth: u16,
-        f: F,
-    ) -> Result<Task, Error> {
+    pub fn spawn_ext<F>(name: &str, priority: u32, stack_depth: u16, f: F) -> Result<Task, Error>
+    where
+        F: FnOnce() + Send + 'static,
+    {
         extern "C" fn run<F: FnOnce()>(arg: *mut libc::c_void) {
             let cb_box: Box<F> = unsafe { Box::from_raw(arg as *mut F) };
             cb_box()
@@ -88,11 +89,9 @@ pub struct Loop {
 
 impl Loop {
     pub fn new(delta: Duration) -> Loop {
-        unsafe {
-            Loop {
-                last_time: bindings::millis(),
-                delta: delta.as_millis() as u32,
-            }
+        Loop {
+            last_time: unsafe { bindings::millis() },
+            delta: delta.as_millis() as u32,
         }
     }
 
