@@ -1,8 +1,10 @@
 #![no_std]
+#![feature(alloc_error_handler)]
 
 use core::panic::PanicInfo;
 use libc_print::libc_println;
 
+mod alloc;
 mod bindings;
 mod motor;
 mod peripherals;
