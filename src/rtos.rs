@@ -1,4 +1,5 @@
 use alloc::boxed::Box;
+use alloc::string::String;
 use core::ptr::null_mut;
 use core::time::Duration;
 
@@ -79,6 +80,10 @@ impl Task {
                 Err(from_errno())
             }
         })
+    }
+
+    pub fn name(&self) -> String {
+        unsafe { from_cstring_raw(bindings::task_get_name(self.0)) }
     }
 }
 
