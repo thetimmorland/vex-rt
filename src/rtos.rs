@@ -1,4 +1,5 @@
 use alloc::boxed::Box;
+use alloc::format;
 use alloc::string::String;
 use core::ptr::null_mut;
 use core::time::Duration;
@@ -29,7 +30,7 @@ impl Task {
             Ok(bindings::task_get_by_name(cname.into_raw()))
         })?;
         if ptr == null_mut() {
-            todo!("Error")
+            Err(Error::Custom(format!("task not found: {}", name)))
         } else {
             Ok(Task(ptr))
         }
