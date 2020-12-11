@@ -13,3 +13,17 @@ where
     let string = format!("{}\0", s);
     f(CString::new(&string)?)
 }
+
+#[inline]
+pub fn from_cstring<'a>(cstring: CString<'a>) -> String {
+    unsafe { from_cstring_raw(cstring.into_raw()) }
+}
+
+#[inline]
+pub unsafe fn from_cstring_raw(cstring: *const libc::c_char) -> String {
+    let len = libc::strlen(cstring);
+    let mut s = String::new();
+    s.reserve(len);
+    libc::memcpy(s.as_mut_ptr() as *mut _, cstring as *const _, len);
+    s
+}
