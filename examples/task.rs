@@ -5,19 +5,19 @@ extern crate vex_rt;
 
 use core::time::Duration;
 use libc_print::std_name::println;
+use vex_rt::*;
 
 struct Robot;
 
-#[vex_rt::entry]
+#[entry]
 impl Robot {
     fn initialize() -> Self {
-        vex_rt::Task::spawn(|| {
-            let mut x = 0;
-            while true {
-                println!("{}", x);
-                x += 1;
-                vex_rt::Task::delay(Duration::from_secs(1));
-            }
+        let mut x = 0;
+        let mut l = Loop::new(Duration::from_secs(1));
+        Task::spawn(move || loop {
+            println!("{}", x);
+            x += 1;
+            l.delay()
         });
         Robot
     }
