@@ -1,43 +1,37 @@
 use std::env;
-use std::fs;
-use std::path::PathBuf;
-use std::process::Command;
+use std::path;
+use std::process;
 use std::str;
 
 use bindgen;
+use zip_extensions::zip_extract;
 
 fn main() {
-    let out = PathBuf::from(env::var("OUT_DIR").unwrap());
-
-    //
-    // register rerun files
-    //
-
     println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed=kernel/firmare/libpros.a");
-    println!("cargo:rerun-if-changed=kernel/firmare/libc.a");
-    println!("cargo:rerun-if-changed=kernel/firmare/libm.a");
-    println!("cargo:rerun-if-changed=kernel/firmare/v5-common.ld");
-    println!("cargo:rerun-if-changed=kernel/firmare/v5.ld.a");
+    let out_dir = path::PathBuf::from(env::var("OUT_DIR").unwrap());
+    extract_firmware(&out_dir);
+    generate_bindings(&out_dir);
+}
 
-    //
-    // find arm-none-eabi include paths
-    //
+fn extract_firmware(out_dir: &path::PathBuf) {
+    let path = path::PathBuf::from("kernel@3.3.1.zip");
+    zip_extract(&path, &out_dir).unwrap();
 
-    let err_msg = "Failed to execute arm-none-eabi-gcc. Is the arm-none-eabi toolchain installed?";
+    println!("cargo:rustc-link-search={}", out_dir.display());
+    println!(
+        "cargo:rustc-link-search={}",
+        out_dir.join("firmware").display()
+    );
+}
+
+fn generate_bindings(out_dir: &path::PathBuf) {
+    let err_msg = "failed to execute arm-none-eabi-gcc. is the arm-none-eabi toolchain installed?";
 
     // https://stackoverflow.com/questions/17939930/finding-out-what-the-gcc-include-path-is
-    let output = if cfg!(target_os = "windows") {
-        Command::new("arm-none-eabi-gcc")
-            .args(&["-E", "-Wp,-v", "-xc", "Nul"])
-            .output()
-            .expect(err_msg)
-    } else {
-        Command::new("arm-none-eabi-gcc")
-            .args(&["-E", "-Wp,-v", "-xc", "/dev/null"])
-            .output()
-            .expect(err_msg)
-    };
+    let output = process::Command::new("arm-none-eabi-gcc")
+        .args(&["-E", "-Wp,-v", "-xc", "/dev/null"])
+        .output()
+        .expect(err_msg);
 
     #[rustfmt::skip]
     // what we want is in stderr for some god-forsaken reason
@@ -53,7 +47,7 @@ fn main() {
     let mut in_include_section = false;
     let mut include_paths: Vec<String> = Vec::new();
 
-    let stderr = str::from_utf8(&output.stderr).expect("Could not read output of arm-none-eabi-gcc as utf-8. Create a Github issue if you see this.");
+    let stderr = str::from_utf8(&output.stderr).unwrap();
 
     for line in stderr.lines() {
         if line == "#include <...> search starts here:" {
@@ -65,12 +59,10 @@ fn main() {
         }
     }
 
-    //
-    // generate bindings
-    //
+    println!("include_paths: {:#?}", include_paths);
 
     let bindings = bindgen::Builder::default()
-        .header("kernel/include/pros/motors.h")
+        .header(out_dir.join("include/pros/motors.h").to_str().unwrap())
         .whitelist_function("motor_.*")
         .whitelist_type("motor_.*")
         .rustified_enum("motor_.*")
@@ -83,28 +75,5 @@ fn main() {
         .generate()
         .expect("Could not generate bindings.");
 
-    bindings
-        .write_to_file(out.join("bindings.rs"))
-        .expect("Couldn't write bindings!");
-
-    //
-    // copy firmware
-    //
-
-    fs::create_dir(out.join("firmware")).unwrap_or_default();
-    fs::copy("kernel/firmware/libpros.a", out.join("firmware/libpros.a")).unwrap();
-    fs::copy("kernel/firmware/libc.a", out.join("firmware/libc.a")).unwrap();
-    fs::copy("kernel/firmware/libm.a", out.join("firmware/libm.a")).unwrap();
-    fs::copy(
-        "kernel/firmware/v5-common.ld",
-        out.join("firmware/v5-common.ld"),
-    )
-    .unwrap();
-    fs::copy("kernel/firmware/v5.ld", out.join("firmware/v5.ld")).unwrap();
-
-    // this is for linker to find linker scripts
-    println!("cargo:rustc-link-search={}", out.display());
-
-    // this is for linker to find libraries
-    println!("cargo:rustc-link-search={}", out.join("firmware").display());
+    bindings.write_to_file(out_dir.join("bindings.rs")).unwrap();
 }

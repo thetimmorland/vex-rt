@@ -14,3 +14,5 @@ spin = "0.7.0"
 
 [build-dependencies]
 bindgen = "0.53.1"
+zip = "0.5.9"
+zip-extensions = "0.6.0"
