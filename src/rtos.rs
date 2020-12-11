@@ -20,6 +20,10 @@ impl Task {
         }
     }
 
+    pub fn current() -> Task {
+        Task(unsafe { bindings::task_get_current() })
+    }
+
     pub fn find_by_name(name: &str) -> Result<Task, Error> {
         let ptr = as_cstring(name, |cname| unsafe {
             Ok(bindings::task_get_by_name(cname.into_raw()))
