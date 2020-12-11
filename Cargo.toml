@@ -9,7 +9,6 @@ edition = "2018"
 [dependencies]
 vex-rt-macros = { version="0.1", path = "macros" }
 libc = { version = "0.2", default-features = false }
-libc_alloc = "1.0.2"
 libc-print = "0.1.14"
 spin = "0.7.0"
 
