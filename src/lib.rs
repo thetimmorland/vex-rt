@@ -1,17 +1,24 @@
 #![no_std]
 #![feature(alloc_error_handler)]
 
+extern crate alloc;
+
 use core::panic::PanicInfo;
 use libc_print::libc_println;
 
-mod alloc;
+mod allocator;
 mod bindings;
+mod error;
 mod motor;
 mod peripherals;
+mod rtos;
 mod smart_port;
+mod util;
 
+pub use error::*;
 pub use motor::*;
 pub use peripherals::*;
+pub use rtos::*;
 pub use smart_port::*;
 
 pub use vex_rt_macros::*;
@@ -26,5 +33,7 @@ fn panic(panic_info: &PanicInfo) -> ! {
         libc_println!("panic occurred!");
     }
 
-    loop {}
+    unsafe {
+        libc::exit(1);
+    }
 }

@@ -45,7 +45,8 @@ fn generate_bindings(out_dir: &path::PathBuf) {
     // End of search list.
 
     let mut in_include_section = false;
-    let mut include_paths: Vec<String> = Vec::new();
+    let mut include_paths: Vec<String> =
+        vec![format!("-I{}", out_dir.join("include").to_str().unwrap())];
 
     let stderr = str::from_utf8(&output.stderr).unwrap();
 
@@ -62,10 +63,15 @@ fn generate_bindings(out_dir: &path::PathBuf) {
     println!("include_paths: {:#?}", include_paths);
 
     let bindings = bindgen::Builder::default()
-        .header(out_dir.join("include/pros/motors.h").to_str().unwrap())
+        .header(out_dir.join("include/api.h").to_str().unwrap())
+        .whitelist_var(".*_DEFAULT")
         .whitelist_function("motor_.*")
+        .whitelist_function("task_.*")
+        .whitelist_function("millis")
         .whitelist_type("motor_.*")
+        .whitelist_type("task_.*")
         .rustified_enum("motor_.*")
+        .rustified_enum("task_.*")
         .clang_arg("-target")
         .clang_arg("arm-none-eabi")
         .clang_args(&include_paths)

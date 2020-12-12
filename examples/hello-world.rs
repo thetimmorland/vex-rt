@@ -4,16 +4,15 @@
 extern crate alloc;
 extern crate vex_rt;
 
-use alloc::string::*;
 use libc_print::std_name::println;
+use vex_rt::*;
 
 struct Robot;
 
-#[vex_rt::entry]
+#[entry]
 impl Robot {
     fn initialize() -> Self {
-        let s = "Hello, world".to_string();
-        println!("{}", s);
+        println!("Hello, world");
         Robot
     }
     fn autonomous(&self) {
