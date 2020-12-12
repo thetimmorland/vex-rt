@@ -15,6 +15,9 @@ pub fn time_since_start() -> Duration {
 pub struct Task(bindings::task_t);
 
 impl Task {
+    pub const DEFAULT_PRIORITY: u32 = bindings::TASK_PRIORITY_DEFAULT;
+    pub const DEFAULT_STACK_DEPTH: u16 = bindings::TASK_STACK_DEPTH_DEFAULT as u16;
+
     pub fn delay(dur: Duration) {
         unsafe {
             bindings::task_delay(dur.as_millis() as u32);
@@ -40,12 +43,7 @@ impl Task {
     where
         F: FnOnce() + Send + 'static,
     {
-        Task::spawn_ext(
-            "",
-            bindings::TASK_PRIORITY_DEFAULT,
-            bindings::TASK_STACK_DEPTH_DEFAULT as u16,
-            f,
-        )
+        Task::spawn_ext("", Self::DEFAULT_PRIORITY, Self::DEFAULT_STACK_DEPTH, f)
     }
 
     pub fn spawn_ext<F>(name: &str, priority: u32, stack_depth: u16, f: F) -> Result<Task, Error>
