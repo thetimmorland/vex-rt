@@ -1,3 +1,5 @@
+use core::ptr;
+
 use crate::error::*;
 use alloc::format;
 use alloc::string::*;
@@ -24,8 +26,9 @@ pub unsafe fn from_cstring_raw(cstring: *const libc::c_char) -> String {
     let len = libc::strlen(cstring);
     let mut s = String::new();
     s.reserve(len);
-    for i in 0..len {
-        s.push(*cstring.offset(i as isize) as char);
+    for _i in 0..len {
+        s.push('\0');
     }
+    ptr::copy(cstring, s.as_mut_ptr(), len);
     s
 }
