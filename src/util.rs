@@ -24,6 +24,8 @@ pub unsafe fn from_cstring_raw(cstring: *const libc::c_char) -> String {
     let len = libc::strlen(cstring);
     let mut s = String::new();
     s.reserve(len);
-    libc::memcpy(s.as_mut_ptr() as *mut _, cstring as *const _, len);
+    for i in 0..len {
+        s.push(*cstring.offset(i as isize) as char);
+    }
     s
 }
