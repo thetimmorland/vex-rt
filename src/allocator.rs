@@ -1,4 +1,7 @@
-use core::alloc::{GlobalAlloc, Layout};
+use core::{
+    alloc::{GlobalAlloc, Layout},
+    ptr::null_mut,
+};
 use libc;
 
 struct Alloc;
@@ -17,11 +20,6 @@ unsafe impl GlobalAlloc for Alloc {
     #[inline]
     unsafe fn dealloc(&self, ptr: *mut u8, _layout: Layout) {
         libc::free(ptr as *mut _);
-    }
-
-    #[inline]
-    unsafe fn realloc(&self, ptr: *mut u8, _layout: Layout, new_size: usize) -> *mut u8 {
-        libc::realloc(ptr as *mut _, new_size) as *mut u8
     }
 }
 
