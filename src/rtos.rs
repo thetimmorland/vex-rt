@@ -106,4 +106,82 @@ impl Loop {
     pub fn delay(&mut self) {
         unsafe { bindings::task_delay_until(&mut self.last_time, self.delta) }
     }
+
+    pub fn next<'a>(&'a mut self) -> impl Selectable + 'a {
+        struct LoopSelect<'a>(&'a mut Loop);
+
+        impl<'a> Selectable for LoopSelect<'a> {
+            fn poll(self) -> Result<(), Self> {
+                if unsafe { bindings::millis() } >= self.0.last_time + self.0.delta {
+                    self.0.last_time += self.0.delta;
+                    Ok(())
+                } else {
+                    Err(self)
+                }
+            }
+            fn sleep(&self) -> GenericSleep {
+                GenericSleep::Timestamp(Duration::from_millis(
+                    (self.0.last_time + self.0.delta).into(),
+                ))
+            }
+        }
+
+        LoopSelect(self)
+    }
+}
+
+#[derive(Copy, Clone)]
+pub enum GenericSleep {
+    NotifyTake(Option<Duration>),
+    Timestamp(Duration),
+}
+
+impl GenericSleep {
+    pub fn sleep(self) -> u32 {
+        match self {
+            GenericSleep::NotifyTake(timeout) => {
+                let timeout =
+                    timeout.map_or(0xffffffff, |v| (time_since_start() - v).as_millis() as u32);
+                unsafe { bindings::task_notify_take(true, timeout) }
+            }
+            GenericSleep::Timestamp(v) => {
+                Task::delay(time_since_start() - v);
+                0
+            }
+        }
+    }
+
+    pub fn timeout(self) -> Option<Duration> {
+        match self {
+            GenericSleep::NotifyTake(v) => v,
+            GenericSleep::Timestamp(v) => Some(v),
+        }
+    }
+}
+
+impl core::ops::BitOr for GenericSleep {
+    type Output = Self;
+    fn bitor(self, rhs: Self) -> Self {
+        match (self, rhs) {
+            (GenericSleep::Timestamp(a), GenericSleep::Timestamp(b)) => {
+                GenericSleep::Timestamp(core::cmp::min(a, b))
+            }
+            (a, b) => GenericSleep::NotifyTake(a.timeout().map_or(b.timeout(), |a| {
+                Some(b.timeout().map_or(a, |b| core::cmp::min(a, b)))
+            })),
+        }
+    }
+}
+
+pub trait Selectable<T = ()> {
+    fn poll(self) -> Result<T, Self>
+    where
+        Self: Sized;
+    fn sleep(&self) -> GenericSleep;
+}
+
+macro_rules! select {
+    { $( $var:ident = $event:expr => $body:expr ,? )+ } => {{
+
+    }}
 }
