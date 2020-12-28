@@ -5,6 +5,7 @@ use alloc::format;
 use alloc::string::*;
 use rcstring::CString;
 
+pub mod ord_arc;
 pub mod owner;
 
 #[inline]
