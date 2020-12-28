@@ -118,7 +118,12 @@ impl<T> Mutex<T> {
 }
 
 impl<T: ?Sized> Mutex<T> {
-    pub fn lock<'a>(&'a self) -> Result<MutexGuard<'a, T>, Error> {
+    pub fn lock<'a>(&'a self) -> MutexGuard<'a, T> {
+        self.try_lock()
+            .unwrap_or_else(|err| panic!("Failed to lock mutex: {:?}", err))
+    }
+
+    pub fn try_lock<'a>(&'a self) -> Result<MutexGuard<'a, T>, Error> {
         if unsafe { bindings::mutex_take(self.mutex, TIMEOUT_MAX) } {
             Ok(MutexGuard(self))
         } else {
