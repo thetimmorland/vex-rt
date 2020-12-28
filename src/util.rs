@@ -7,6 +7,7 @@ use rcstring::CString;
 
 pub mod ord_arc;
 pub mod owner;
+pub mod shared_set;
 
 #[inline]
 pub fn as_cstring<V, T, F>(v: V, f: F) -> Result<T, Error>
