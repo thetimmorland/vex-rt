@@ -24,7 +24,7 @@ pub use smart_port::*;
 
 pub use vex_rt_macros::*;
 
-pub use spin::*;
+pub use spin::once;
 
 #[panic_handler]
 fn panic(panic_info: &PanicInfo) -> ! {
