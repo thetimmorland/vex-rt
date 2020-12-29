@@ -1,7 +1,8 @@
 use alloc::sync::{Arc, Weak};
-use core::time::Duration;
+use core::{cmp::min, time::Duration};
 
 use crate::{
+    time_since_start,
     util::{
         ord_arc::OrdArc,
         owner::Owner,
@@ -40,6 +41,16 @@ impl Context {
             });
         }
         ctx
+    }
+
+    pub fn fork_with_deadline(&self, deadline: Duration) -> Self {
+        let mut ctx = self.fork();
+        ctx.deadline = Some(ctx.deadline.map_or(deadline, |d| min(d, deadline)));
+        ctx
+    }
+
+    pub fn fork_with_timeout(&self, timeout: Duration) -> Self {
+        self.fork_with_deadline(time_since_start() + timeout)
     }
 }
 
