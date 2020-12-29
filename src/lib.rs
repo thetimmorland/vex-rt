@@ -9,6 +9,7 @@ use libc_print::libc_println;
 
 mod allocator;
 mod bindings;
+mod context;
 mod error;
 mod motor;
 mod peripherals;
@@ -16,6 +17,7 @@ mod rtos;
 mod smart_port;
 mod util;
 
+pub use context::*;
 pub use error::*;
 pub use motor::*;
 pub use peripherals::*;
