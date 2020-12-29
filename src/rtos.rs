@@ -307,10 +307,8 @@ impl core::ops::BitOr for GenericSleep {
     }
 }
 
-pub trait Selectable<T = ()> {
-    fn poll(self) -> Result<T, Self>
-    where
-        Self: Sized;
+pub trait Selectable<T = ()>: Sized {
+    fn poll(self) -> Result<T, Self>;
     fn sleep(&self) -> GenericSleep;
 }
 
