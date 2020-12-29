@@ -37,30 +37,31 @@ pub fn entry(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let impl_ = parse_macro_input!(input as ItemImpl);
 
-    let valid_impl = impl_.trait_.is_none() && impl_.items.len() == 4;
-    impl_.items.iter().fold(true, |is_valid, it| match it {
-        ImplItem::Method(method) => is_valid && expected_sigs.contains(&method.sig),
-        _ => false,
-    });
+    let valid_impl = impl_.trait_.is_none()
+        && impl_.items.len() == 4
+        && impl_.items.iter().fold(true, |is_valid, it| match it {
+            ImplItem::Method(method) => is_valid && expected_sigs.contains(&method.sig),
+            _ => false,
+        });
 
     if !valid_impl {
         return parse::Error::new(
             impl_.span(),
-            "`#[vex_rt::entry]` impl must have the form:
+            r#"`#[vex_rt::entry]` impl must have the form:
 impl Foo {
-\tfn initialize -> Self;
-\t\t...
-\t}
-\tfn autonomous(&self) {
-\t\t...
-\t}
-\tfn opcontrol(&self) {
-\t\t...
-\t}
-\tfn disable(&self) {
-\t\t...
-\t}
-}",
+    fn initialize -> Self;
+        ...
+    }
+    fn autonomous(&self) {
+        ...
+    }
+    fn opcontrol(&self) {
+        ...
+	}
+    fn disable(&self) {
+        ...
+    }
+}"#,
         )
         .to_compile_error()
         .into();
