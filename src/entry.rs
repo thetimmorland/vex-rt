@@ -1,5 +1,6 @@
 /// A trait representing a competition-ready VEX Robot.
 pub trait Robot {
+    /// Initializes the Robot.
     fn initialize() -> Self;
     /// Runs during the autonomous period.
     fn autonomous(&mut self);
@@ -34,7 +35,7 @@ pub trait Robot {
 ///     fn disable(&mut self) {}
 /// }
 ///
-/// entry!(FooBot::initialize(), FooBot);
+/// entry!(FooBot);
 /// ```
 macro_rules! entry {
     ($robot_type:ty) => {
