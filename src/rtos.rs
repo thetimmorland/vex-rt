@@ -283,12 +283,16 @@ impl GenericSleep {
     pub fn sleep(self) -> u32 {
         match self {
             GenericSleep::NotifyTake(timeout) => {
-                let timeout =
-                    timeout.map_or(TIMEOUT_MAX, |v| (time_since_start() - v).as_millis() as u32);
+                let timeout = timeout.map_or(TIMEOUT_MAX, |v| {
+                    v.checked_sub(time_since_start())
+                        .map_or(0, |d| d.as_millis() as u32)
+                });
                 unsafe { bindings::task_notify_take(true, timeout) }
             }
             GenericSleep::Timestamp(v) => {
-                Task::delay(time_since_start() - v);
+                if let Some(d) = v.checked_sub(time_since_start()) {
+                    Task::delay(d)
+                }
                 0
             }
         }
