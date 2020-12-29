@@ -14,21 +14,18 @@ impl Robot {
     fn initialize() -> Self {
         let mut x = 0;
         let mut l = Loop::new(Duration::from_secs(1));
-        Task::spawn_ext(
-            "test",
-            Task::DEFAULT_PRIORITY,
-            Task::DEFAULT_STACK_DEPTH,
-            move || {
-                println!("Task name: {}", Task::current().name());
-                loop {
-                    println!("{}", x);
-                    x += 1;
-                    select! {
-                        _ = l.next() => ()
-                    }
+        let ctx = Context::new_global();
+        Task::spawn(move || {
+            println!("Task name: {}", Task::current().name());
+            loop {
+                println!("{}", x);
+                x += 1;
+                select! {
+                    _ = l.next() => (),
+                    _ = ctx.done() => (),
                 }
-            },
-        );
+            }
+        });
         Robot
     }
     fn autonomous(&self) {
