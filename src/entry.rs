@@ -1,5 +1,7 @@
 /// A trait representing a competition-ready VEX Robot.
 pub trait Robot {
+    /// Runs at startup. This should be non-blocking, since the FreeRTOS
+    /// scheduler doesn't start until it returns.
     fn initialize() -> Self;
     /// Runs during the autonomous period.
     fn autonomous(&mut self);
