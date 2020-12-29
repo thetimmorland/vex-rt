@@ -36,7 +36,7 @@ pub trait Robot {
 ///     fn disable(&mut self) {}
 /// }
 ///
-/// entry!(FooBot::initialize(), FooBot);
+/// entry!(FooBot);
 /// ```
 macro_rules! entry {
     ($robot_type:ty) => {
