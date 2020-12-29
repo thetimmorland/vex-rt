@@ -17,7 +17,6 @@ impl Robot for SelectRobot {
         println!("autonomous");
         let mut x = 0;
         let mut l = Loop::new(Duration::from_secs(1));
-        let ctx = ctx.clone();
         loop {
             println!("{}", x);
             x += 1;
