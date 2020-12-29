@@ -13,24 +13,23 @@ impl Robot for SelectRobot {
     fn initialize() -> Self {
         Self
     }
-    fn autonomous(&self, _: Context) {
+    fn autonomous(&self, ctx: Context) {
         println!("autonomous");
-    }
-    fn opcontrol(&self, ctx: Context) {
-        println!("opcontrol");
-        Task::spawn({
-            let mut x = 0;
-            let mut l = Loop::new(Duration::from_secs(1));
-            let ctx = ctx.clone();
-            move || loop {
-                println!("{}", x);
-                x += 1;
-                select! {
-                    _ = l.next() => {},
-                    _ = ctx.done() => break,
-                }
+        let mut x = 0;
+        let mut l = Loop::new(Duration::from_secs(1));
+        let ctx = ctx.clone();
+        loop {
+            println!("{}", x);
+            x += 1;
+            select! {
+                _ = l.next() => {},
+                _ = ctx.done() => break,
             }
-        });
+        }
+        println!("auto done")
+    }
+    fn opcontrol(&self, _: Context) {
+        println!("opcontrol");
     }
     fn disabled(&self, _: Context) {
         println!("disabled");
