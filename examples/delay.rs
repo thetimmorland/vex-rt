@@ -1,17 +1,25 @@
 #![no_std]
 #![no_main]
 
-extern crate vex_rt as rt;
-
 use core::time::Duration;
 use libc_print::libc_println;
-use rt::Task;
+use vex_rt::{entry, Robot, Task};
 
-#[no_mangle]
-extern "C" fn opcontrol() {
-    let x: u32 = 0;
-    loop {
-        libc_println!("x = {}", x);
-        Task::delay(Duration::from_secs(1));
+struct DelayBot;
+
+impl Robot for DelayBot {
+    fn initialize() -> Self {
+        Self
     }
+    fn autonomous(&mut self) {}
+    fn opcontrol(&mut self) {
+        let x: u32 = 0;
+        loop {
+            libc_println!("x = {}", x);
+            Task::delay(Duration::from_secs(1));
+        }
+    }
+    fn disable(&mut self) {}
 }
+
+entry!(DelayBot);
