@@ -5,23 +5,28 @@ extern crate alloc;
 extern crate vex_rt;
 
 use libc_print::std_name::println;
-use vex_rt::*;
+use vex_rt::entry;
+use vex_rt::Robot;
 
-struct Robot;
+struct HelloBot;
 
-#[entry]
-impl Robot {
+impl HelloBot {
     fn initialize() -> Self {
-        println!("Hello, world");
-        Robot
+        println!("initialize");
+        HelloBot
     }
-    fn autonomous(&self) {
+}
+
+impl Robot for HelloBot {
+    fn autonomous(&mut self) {
         println!("autonomous");
     }
-    fn opcontrol(&self) {
+    fn opcontrol(&mut self) {
         println!("opcontrol");
     }
-    fn disable(&self) {
+    fn disable(&mut self) {
         println!("disabled");
     }
 }
+
+entry!(HelloBot::initialize(), HelloBot);

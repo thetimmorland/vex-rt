@@ -5,12 +5,11 @@ extern crate vex_rt;
 
 use core::time::Duration;
 use libc_print::std_name::println;
-use vex_rt::*;
+use vex_rt::{entry, Loop, Robot, Task};
 
-struct Robot;
+struct TaskBot;
 
-#[entry]
-impl Robot {
+impl TaskBot {
     fn initialize() -> Self {
         let mut x = 0;
         let mut l = Loop::new(Duration::from_secs(1));
@@ -27,15 +26,20 @@ impl Robot {
                 }
             },
         );
-        Robot
+        TaskBot
     }
-    fn autonomous(&self) {
+}
+
+impl Robot for TaskBot {
+    fn autonomous(&mut self) {
         println!("autonomous");
     }
-    fn opcontrol(&self) {
+    fn opcontrol(&mut self) {
         println!("opcontrol");
     }
-    fn disable(&self) {
+    fn disable(&mut self) {
         println!("disabled");
     }
 }
+
+entry!(TaskBot::initialize(), TaskBot);
