@@ -32,7 +32,7 @@ impl Robot for TaskBot {
     fn opcontrol(&mut self) {
         println!("opcontrol");
     }
-    fn disable(&mut self) {
+    fn disabled(&mut self) {
         println!("disabled");
     }
 }

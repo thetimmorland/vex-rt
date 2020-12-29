@@ -35,7 +35,7 @@ impl Robot for SelectRobot {
         Task::delay(Duration::from_secs(10));
         ctx.cancel();
     }
-    fn disable(&mut self) {
+    fn disabled(&mut self) {
         println!("disabled");
     }
 }

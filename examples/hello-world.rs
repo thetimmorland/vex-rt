@@ -17,7 +17,7 @@ impl Robot for HelloBot {
     fn opcontrol(&mut self) {
         println!("opcontrol");
     }
-    fn disable(&mut self) {
+    fn disabled(&mut self) {
         println!("disabled");
     }
 }

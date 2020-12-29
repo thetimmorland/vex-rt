@@ -8,7 +8,7 @@ pub trait Robot {
     /// Runs during the opcontrol period.
     fn opcontrol(&mut self);
     /// Runs when the robot is disabled.
-    fn disable(&mut self);
+    fn disabled(&mut self);
 }
 
 #[macro_export]
@@ -33,7 +33,7 @@ pub trait Robot {
 /// impl Robot for FooBot {
 ///     fn autonomous(&mut self) {}
 ///     fn opcontrol(&mut self) {}
-///     fn disable(&mut self) {}
+///     fn disabled(&mut self) {}
 /// }
 ///
 /// entry!(FooBot);
@@ -59,7 +59,7 @@ macro_rules! entry {
 
         #[no_mangle]
         unsafe extern "C" fn disabled() {
-            $crate::Robot::disable(ROBOT.get_mut().unwrap());
+            $crate::Robot::disabled(ROBOT.get_mut().unwrap());
         }
     };
 }

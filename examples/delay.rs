@@ -19,7 +19,7 @@ impl Robot for DelayBot {
             Task::delay(Duration::from_secs(1));
         }
     }
-    fn disable(&mut self) {}
+    fn disabled(&mut self) {}
 }
 
 entry!(DelayBot);
