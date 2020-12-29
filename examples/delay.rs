@@ -14,15 +14,15 @@ impl DelayBot {
 }
 
 impl Robot for DelayBot {
-    fn autonomous() {}
-    fn opcontrol() {
+    fn autonomous(&mut self) {}
+    fn opcontrol(&mut self) {
         let x: u32 = 0;
         loop {
             libc_println!("x = {}", x);
             Task::delay(Duration::from_secs(1));
         }
     }
-    fn disable() {}
+    fn disable(&mut self) {}
 }
 
 entry!(DelayBot::initialize(), DelayBot);
