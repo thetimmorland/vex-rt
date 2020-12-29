@@ -6,9 +6,15 @@ use core::{cell::UnsafeCell, fmt};
 use core::{ops::Deref, time::Duration};
 use core::{ops::DerefMut, ptr::null_mut};
 
-use crate::bindings;
-use crate::error::*;
-use crate::util::*;
+use crate::{
+    bindings,
+    error::*,
+    util::{
+        owner::Owner,
+        shared_set::{insert, SharedSet, SharedSetHandle},
+        *,
+    },
+};
 
 const TIMEOUT_MAX: u32 = 0xffffffff;
 
@@ -340,4 +346,34 @@ macro_rules! select {
             $crate::select_sleep!(events; $($event,)+).sleep();
         }
     }};
+}
+
+pub struct Event(SharedSet<bindings::task_t>);
+
+impl Event {
+    pub fn new() -> Self {
+        Event(SharedSet::new())
+    }
+
+    pub fn notify(&self) {
+        for t in self.0.iter() {
+            unsafe { bindings::task_notify(*t) };
+        }
+    }
+}
+
+pub struct EventHandle<O: Owner<Event>>(
+    Option<SharedSetHandle<bindings::task_t, EventHandleOwner<O>>>,
+);
+
+struct EventHandleOwner<O: Owner<Event>>(O);
+
+impl<O: Owner<Event>> Owner<SharedSet<bindings::task_t>> for EventHandleOwner<O> {
+    fn with<U>(&self, f: impl FnOnce(&mut SharedSet<bindings::task_t>) -> U) -> Option<U> {
+        self.0.with(|e| f(&mut e.0))
+    }
+}
+
+pub fn handle_event<O: Owner<Event>>(owner: O) -> EventHandle<O> {
+    EventHandle(insert(EventHandleOwner(owner), Task::current().0))
 }
