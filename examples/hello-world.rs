@@ -1,12 +1,8 @@
 #![no_std]
 #![no_main]
 
-extern crate alloc;
-extern crate vex_rt;
-
 use libc_print::std_name::println;
-use vex_rt::entry;
-use vex_rt::Robot;
+use vex_rt::{entry, Robot};
 
 struct HelloBot;
 

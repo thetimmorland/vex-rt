@@ -1,8 +1,6 @@
 #![no_std]
 #![no_main]
 
-extern crate vex_rt;
-
 use core::time::Duration;
 use libc_print::std_name::println;
 use vex_rt::{entry, Loop, Robot, Task};
