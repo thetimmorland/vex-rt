@@ -1,6 +1,7 @@
 #![no_std]
 #![feature(alloc_error_handler)]
 #![feature(negative_impls)]
+#![warn(missing_docs)]
 
 extern crate alloc;
 
