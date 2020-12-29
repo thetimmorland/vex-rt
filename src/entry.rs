@@ -27,13 +27,13 @@ pub trait Robot {
 ///     }
 /// }
 ///
-/// impl Robot for HelloBot {
+/// impl Robot for FooBot {
 ///     fn autonomous(&mut self) {}
 ///     fn opcontrol(&mut self) {}
 ///     fn disable(&mut self) {}
 /// }
 ///
-/// entry!(HelloBot::initialize(), HelloBot);
+/// entry!(FooBot::initialize(), FooBot);
 /// ```
 macro_rules! entry {
     ($robot_expr:expr, $robot_type:ty) => {
