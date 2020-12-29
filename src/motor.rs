@@ -2,8 +2,11 @@ use crate::bindings;
 
 /// An enum which represents possible gear cartridges for a motor.
 pub enum Gearset {
+    /// Blue 6:1 Gearset (600RPM)
     SixToOne,
+    /// Green 18:1 Gearset (200RPM)
     EighteenToOne,
+    /// Red 36:1 Gearset (100RPM)
     ThirtySixToOne,
 }
 
