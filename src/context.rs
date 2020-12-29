@@ -8,7 +8,7 @@ use crate::{
         owner::Owner,
         shared_set::{insert, SharedSet, SharedSetHandle},
     },
-    Event, Mutex,
+    Event, GenericSleep, Mutex, Selectable,
 };
 
 type ContextMutex = Mutex<Option<ContextData>>;
@@ -20,6 +20,17 @@ pub struct Context {
 }
 
 impl Context {
+    pub fn new_global() -> Self {
+        Self {
+            deadline: None,
+            data: Arc::new(Mutex::new(Some(ContextData {
+                _parent: None,
+                event: Event::new(),
+                children: SharedSet::new(),
+            }))),
+        }
+    }
+
     pub fn cancel(&self) {
         cancel(self.data.as_ref());
     }
@@ -51,6 +62,34 @@ impl Context {
 
     pub fn fork_with_timeout(&self, timeout: Duration) -> Self {
         self.fork_with_deadline(time_since_start() + timeout)
+    }
+
+    pub fn done<'a>(&'a self) -> impl Selectable + 'a {
+        struct ContextSelect<'a>(&'a Context);
+
+        impl<'a> Selectable for ContextSelect<'a> {
+            fn poll(self) -> Result<(), Self> {
+                let mut lock = self.0.data.lock();
+                let opt = &mut lock.as_mut();
+                match opt {
+                    Some(d) => {
+                        if self.0.deadline.map_or(false, |d| d <= time_since_start()) {
+                            d.cancel();
+                            *opt = None;
+                            Ok(())
+                        } else {
+                            Err(self)
+                        }
+                    }
+                    None => Ok(()),
+                }
+            }
+            fn sleep(&self) -> GenericSleep {
+                GenericSleep::NotifyTake(self.0.deadline)
+            }
+        }
+
+        ContextSelect(self)
     }
 }
 
