@@ -6,7 +6,7 @@
 extern crate alloc;
 
 use core::panic::PanicInfo;
-use libc_print::libc_println;
+use libc_print::libc_eprintln;
 
 mod allocator;
 mod bindings;
@@ -31,11 +31,7 @@ pub use spin::once;
 
 #[panic_handler]
 fn panic(panic_info: &PanicInfo) -> ! {
-    if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
-        libc_println!("panic occurred!: {:?}", s);
-    } else {
-        libc_println!("panic occurred!");
-    }
+    libc_eprintln!("panic occurred!: {:?}", panic_info);
 
     unsafe {
         libc::exit(1);
