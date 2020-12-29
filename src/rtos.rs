@@ -327,24 +327,44 @@ pub trait Selectable<T = ()>: Sized {
 
 #[macro_export]
 macro_rules! select_head {
-    () => {()};
-    ($event:expr, $($rest:expr,)*) => {($event, select_head!($($rest,)*))}
+    ($event:expr,) => {$event};
+    ($event:expr, $($rest:expr,)+) => {($event, select_head!($($rest,)*))}
+}
+
+#[macro_export]
+macro_rules! select_match {
+    { $event:expr; $cons:expr; $_:expr, } => {
+        match $crate::Selectable::poll($event) {
+            ::core::result::Result::Ok(r) => break $cons(r),
+            ::core::result::Result::Err(s) => s,
+        }
+    };
+    { $events:expr; $cons:expr; $_:expr, $($rest:expr,)+ } => {
+        match $crate::Selectable::poll($events.0) {
+            ::core::result::Result::Ok(r) => break $cons(::core::result::Result::Ok(r)),
+            ::core::result::Result::Err(s) => (s, select_match!{$events.1; |r| $cons(::core::result::Result::Err(r)); $($rest,)*}),
+        }
+    };
 }
 
 #[macro_export]
 macro_rules! select_body {
-    { $events:expr; } => {$events};
-    { $events:expr; $var:pat => $body:expr, $($vars:pat => $bodys:expr,)* } => {
-        match $crate::Selectable::poll($events.0) {
-            ::core::result::Result::Ok($var) => break $body,
-            ::core::result::Result::Err(s) => (s, select_body!{$events.1; $($vars => $bodys,)*}),
+    { $result:expr; $var:pat => $body:expr, } => {
+        match $result {
+            $var => $body,
+        }
+    };
+    { $result:expr; $var:pat => $body:expr, $($vars:pat => $bodys:expr,)+ } => {
+        match $result {
+            ::core::result::Result::Ok($var) => $body,
+            ::core::result::Result::Err(r) => select_body!{r; $($vars => $bodys,)*},
         }
     };
 }
 
 #[macro_export]
 macro_rules! select_sleep {
-    ($events:expr; $_:expr,) => {$events.0.sleep()};
+    ($events:expr; $_:expr,) => {$events.sleep()};
     ($events:expr; $_:expr, $($rest:expr,)+) => {$events.0.sleep() | select_sleep!($events.1; $($rest,)+)};
 }
 
@@ -352,10 +372,10 @@ macro_rules! select_sleep {
 macro_rules! select {
     { $( $var:pat = $event:expr => $body:expr ),+ $(,)? } => {{
         let mut events = $crate::select_head!($($event,)+);
-        loop {
-            events = $crate::select_body!{events; $($var => $body,)+};
+        select_body!{loop {
+            events = $crate::select_match!{events; |r| r; $($event,)+};
             $crate::select_sleep!(events; $($event,)+).sleep();
-        }
+        }; $($var => $body,)+}
     }};
 }
 
