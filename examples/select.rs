@@ -7,17 +7,16 @@ use core::time::Duration;
 use libc_print::std_name::println;
 use vex_rt::*;
 
-struct Robot;
+struct SelectRobot;
 
-#[entry]
-impl Robot {
+impl Robot for SelectRobot {
     fn initialize() -> Self {
-        Robot
+        Self
     }
-    fn autonomous(&self) {
+    fn autonomous(&mut self) {
         println!("autonomous");
     }
-    fn opcontrol(&self) {
+    fn opcontrol(&mut self) {
         println!("opcontrol");
         let ctx = Context::new_global();
         Task::spawn({
@@ -36,7 +35,9 @@ impl Robot {
         Task::delay(Duration::from_secs(10));
         ctx.cancel();
     }
-    fn disable(&self) {
+    fn disable(&mut self) {
         println!("disabled");
     }
 }
+
+entry!(SelectRobot);
