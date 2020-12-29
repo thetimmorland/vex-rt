@@ -22,7 +22,12 @@ pub fn time_since_start() -> Duration {
     unsafe { Duration::from_millis(bindings::millis().into()) }
 }
 
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct Task(bindings::task_t);
+
+unsafe impl Send for Task {}
+
+unsafe impl Sync for Task {}
 
 impl Task {
     pub const DEFAULT_PRIORITY: u32 = bindings::TASK_PRIORITY_DEFAULT;
@@ -104,6 +109,10 @@ pub struct Mutex<T: ?Sized> {
     mutex: bindings::mutex_t,
     data: UnsafeCell<T>,
 }
+
+unsafe impl<T: ?Sized + Send> Send for Mutex<T> {}
+
+unsafe impl<T: ?Sized + Sync> Sync for Mutex<T> {}
 
 impl<T> Mutex<T> {
     pub fn new(data: T) -> Self {
@@ -315,13 +324,13 @@ pub trait Selectable<T = ()>: Sized {
 #[macro_export]
 macro_rules! select_head {
     () => {()};
-    ($event:expr, $($rest:expr),*) => {($event, select_head!($($rest),*))}
+    ($event:expr, $($rest:expr,)*) => {($event, select_head!($($rest,)*))}
 }
 
 #[macro_export]
 macro_rules! select_body {
     { $events:expr; } => {$events};
-    { $events:expr; $var:pat => $body:expr, $($vars:pat => $bodys:expr),* } => {
+    { $events:expr; $var:pat => $body:expr, $($vars:pat => $bodys:expr,)* } => {
         match $crate::Selectable::poll($events.0) {
             ::core::result::Result::Ok($var) => break $body,
             ::core::result::Result::Err(s) => (s, select_body!{$events.1; $($vars => $bodys,)*}),
@@ -332,7 +341,7 @@ macro_rules! select_body {
 #[macro_export]
 macro_rules! select_sleep {
     ($events:expr; $_:expr,) => {$events.0.sleep()};
-    ($events:expr; $_:expr, $($rest:expr),+) => {$events.0.sleep() | select_sleep!($events.1; $($rest,)+)};
+    ($events:expr; $_:expr, $($rest:expr,)+) => {$events.0.sleep() | select_sleep!($events.1; $($rest,)+)};
 }
 
 #[macro_export]
@@ -346,7 +355,7 @@ macro_rules! select {
     }};
 }
 
-pub struct Event(SharedSet<bindings::task_t>);
+pub struct Event(SharedSet<Task>);
 
 impl Event {
     pub fn new() -> Self {
@@ -355,23 +364,21 @@ impl Event {
 
     pub fn notify(&self) {
         for t in self.0.iter() {
-            unsafe { bindings::task_notify(*t) };
+            unsafe { bindings::task_notify(t.0) };
         }
     }
 }
 
-pub struct EventHandle<O: Owner<Event>>(
-    Option<SharedSetHandle<bindings::task_t, EventHandleOwner<O>>>,
-);
+pub struct EventHandle<O: Owner<Event>>(Option<SharedSetHandle<Task, EventHandleOwner<O>>>);
 
 struct EventHandleOwner<O: Owner<Event>>(O);
 
-impl<O: Owner<Event>> Owner<SharedSet<bindings::task_t>> for EventHandleOwner<O> {
-    fn with<U>(&self, f: impl FnOnce(&mut SharedSet<bindings::task_t>) -> U) -> Option<U> {
+impl<O: Owner<Event>> Owner<SharedSet<Task>> for EventHandleOwner<O> {
+    fn with<U>(&self, f: impl FnOnce(&mut SharedSet<Task>) -> U) -> Option<U> {
         self.0.with(|e| f(&mut e.0))
     }
 }
 
 pub fn handle_event<O: Owner<Event>>(owner: O) -> EventHandle<O> {
-    EventHandle(insert(EventHandleOwner(owner), Task::current().0))
+    EventHandle(insert(EventHandleOwner(owner), Task::current()))
 }
