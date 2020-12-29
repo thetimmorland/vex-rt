@@ -11,6 +11,7 @@ use libc_print::libc_eprintln;
 mod allocator;
 mod bindings;
 mod context;
+mod entry;
 mod error;
 mod motor;
 mod peripherals;
@@ -19,13 +20,12 @@ mod smart_port;
 mod util;
 
 pub use context::*;
+pub use entry::*;
 pub use error::*;
 pub use motor::*;
 pub use peripherals::*;
 pub use rtos::*;
 pub use smart_port::*;
-
-pub use vex_rt_macros::*;
 
 pub use spin::once;
 
