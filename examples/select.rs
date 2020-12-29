@@ -13,12 +13,11 @@ impl Robot for SelectRobot {
     fn initialize() -> Self {
         Self
     }
-    fn autonomous(&mut self) {
+    fn autonomous(&self, _: Context) {
         println!("autonomous");
     }
-    fn opcontrol(&mut self) {
+    fn opcontrol(&self, ctx: Context) {
         println!("opcontrol");
-        let ctx = Context::new_global();
         Task::spawn({
             let mut x = 0;
             let mut l = Loop::new(Duration::from_secs(1));
@@ -32,10 +31,8 @@ impl Robot for SelectRobot {
                 }
             }
         });
-        Task::delay(Duration::from_secs(10));
-        ctx.cancel();
     }
-    fn disabled(&mut self) {
+    fn disabled(&self, _: Context) {
         println!("disabled");
     }
 }

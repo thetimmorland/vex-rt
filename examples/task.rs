@@ -3,7 +3,7 @@
 
 use core::time::Duration;
 use libc_print::std_name::println;
-use vex_rt::{entry, Loop, Robot, Task};
+use vex_rt::{entry, Context, Loop, Robot, Task};
 
 struct TaskBot;
 
@@ -26,13 +26,13 @@ impl Robot for TaskBot {
         );
         TaskBot
     }
-    fn autonomous(&mut self) {
+    fn autonomous(&self, _: Context) {
         println!("autonomous");
     }
-    fn opcontrol(&mut self) {
+    fn opcontrol(&self, _: Context) {
         println!("opcontrol");
     }
-    fn disabled(&mut self) {
+    fn disabled(&self, _: Context) {
         println!("disabled");
     }
 }
