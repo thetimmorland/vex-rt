@@ -346,7 +346,7 @@ macro_rules! select_sleep {
 
 #[macro_export]
 macro_rules! select {
-    { $( $var:pat = $event:expr => $body:expr ),+ } => {{
+    { $( $var:pat = $event:expr => $body:expr ),+ $(,)? } => {{
         let mut events = $crate::select_head!($($event,)+);
         loop {
             events = $crate::select_body!{events; $($var => $body,)+};
