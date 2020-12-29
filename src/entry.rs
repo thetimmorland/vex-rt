@@ -1,5 +1,6 @@
 /// A trait representing a competition-ready VEX Robot.
 pub trait Robot {
+    fn initialize() -> Self;
     /// Runs during the autonomous period.
     fn autonomous(&mut self);
     /// Runs during the opcontrol period.
@@ -36,12 +37,12 @@ pub trait Robot {
 /// entry!(FooBot::initialize(), FooBot);
 /// ```
 macro_rules! entry {
-    ($robot_expr:expr, $robot_type:ty) => {
+    ($robot_type:ty) => {
         static mut ROBOT: $crate::once::Once<$robot_type> = $crate::once::Once::new();
 
         #[no_mangle]
         unsafe extern "C" fn initialize() {
-            ROBOT.call_once(|| $robot_expr);
+            ROBOT.call_once(|| $crate::Robot::initialize());
         }
 
         #[no_mangle]

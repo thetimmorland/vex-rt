@@ -7,13 +7,10 @@ use vex_rt::{entry, Robot, Task};
 
 struct DelayBot;
 
-impl DelayBot {
-    fn initialize() -> Self {
-        DelayBot
-    }
-}
-
 impl Robot for DelayBot {
+    fn initialize() -> Self {
+        Self
+    }
     fn autonomous(&mut self) {}
     fn opcontrol(&mut self) {
         let x: u32 = 0;
@@ -25,4 +22,4 @@ impl Robot for DelayBot {
     fn disable(&mut self) {}
 }
 
-entry!(DelayBot::initialize(), DelayBot);
+entry!(DelayBot);

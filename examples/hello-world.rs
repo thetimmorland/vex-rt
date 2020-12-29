@@ -6,14 +6,11 @@ use vex_rt::{entry, Robot};
 
 struct HelloBot;
 
-impl HelloBot {
+impl Robot for HelloBot {
     fn initialize() -> Self {
         println!("initialize");
         HelloBot
     }
-}
-
-impl Robot for HelloBot {
     fn autonomous(&mut self) {
         println!("autonomous");
     }
@@ -25,4 +22,4 @@ impl Robot for HelloBot {
     }
 }
 
-entry!(HelloBot::initialize(), HelloBot);
+entry!(HelloBot);

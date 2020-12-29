@@ -7,7 +7,7 @@ use vex_rt::{entry, Loop, Robot, Task};
 
 struct TaskBot;
 
-impl TaskBot {
+impl Robot for TaskBot {
     fn initialize() -> Self {
         let mut x = 0;
         let mut l = Loop::new(Duration::from_secs(1));
@@ -26,9 +26,6 @@ impl TaskBot {
         );
         TaskBot
     }
-}
-
-impl Robot for TaskBot {
     fn autonomous(&mut self) {
         println!("autonomous");
     }
@@ -40,4 +37,4 @@ impl Robot for TaskBot {
     }
 }
 
-entry!(TaskBot::initialize(), TaskBot);
+entry!(TaskBot);
