@@ -49,17 +49,32 @@ macro_rules! entry {
 
         #[no_mangle]
         unsafe extern "C" fn opcontrol() {
-            $crate::Robot::opcontrol(ROBOT.get_mut().unwrap());
+            $crate::Task::spawn_ext(
+                "opcontrol",
+                $crate::Task::DEFAULT_PRIORITY,
+                $crate::Task::DEFAULT_STACK_DEPTH,
+                || $crate::Robot::opcontrol(ROBOT.get_mut().unwrap()),
+            );
         }
 
         #[no_mangle]
         unsafe extern "C" fn autonomous() {
-            $crate::Robot::autonomous(ROBOT.get_mut().unwrap());
+            $crate::Task::spawn_ext(
+                "autonomous",
+                $crate::Task::DEFAULT_PRIORITY,
+                $crate::Task::DEFAULT_STACK_DEPTH,
+                || $crate::Robot::autonomous(ROBOT.get_mut().unwrap()),
+            );
         }
 
         #[no_mangle]
         unsafe extern "C" fn disabled() {
-            $crate::Robot::disabled(ROBOT.get_mut().unwrap());
+            $crate::Task::spawn_ext(
+                "disabled",
+                $crate::Task::DEFAULT_PRIORITY,
+                $crate::Task::DEFAULT_STACK_DEPTH,
+                || $crate::Robot::disabled(ROBOT.get_mut().unwrap()),
+            );
         }
     };
 }
