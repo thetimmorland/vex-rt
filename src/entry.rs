@@ -1,14 +1,34 @@
+use crate::{Context, Mutex};
+
 /// A trait representing a competition-ready VEX Robot.
 pub trait Robot {
     /// Runs at startup. This should be non-blocking, since the FreeRTOS
     /// scheduler doesn't start until it returns.
     fn initialize() -> Self;
     /// Runs during the autonomous period.
-    fn autonomous(&mut self);
+    fn autonomous(&self, ctx: Context);
     /// Runs during the opcontrol period.
-    fn opcontrol(&mut self);
+    fn opcontrol(&self, ctx: Context);
     /// Runs when the robot is disabled.
-    fn disable(&mut self);
+    fn disabled(&self, ctx: Context);
+}
+
+pub struct ContextWrapper(Mutex<Option<Context>>);
+
+impl ContextWrapper {
+    pub fn new() -> Self {
+        Self(Mutex::new(None))
+    }
+
+    pub fn replace(&self) -> Context {
+        let mut opt = self.0.lock();
+        if let Some(ctx) = opt.take() {
+            ctx.cancel();
+        }
+        let ctx = Context::new_global();
+        *opt = Some(ctx.clone());
+        ctx
+    }
 }
 
 #[macro_export]
@@ -31,35 +51,54 @@ pub trait Robot {
 /// }
 ///
 /// impl Robot for FooBot {
-///     fn autonomous(&mut self) {}
-///     fn opcontrol(&mut self) {}
-///     fn disable(&mut self) {}
+///     fn autonomous(&self, ctx: Context) {}
+///     fn opcontrol(&self, ctx: Context) {}
+///     fn disabled(&self, ctx: Context) {}
 /// }
 ///
 /// entry!(FooBot);
 /// ```
 macro_rules! entry {
     ($robot_type:ty) => {
-        static mut ROBOT: $crate::once::Once<$robot_type> = $crate::once::Once::new();
+        static ROBOT: $crate::once::Once<($robot_type, $crate::ContextWrapper)> =
+            $crate::once::Once::new();
 
         #[no_mangle]
         unsafe extern "C" fn initialize() {
-            ROBOT.call_once(|| $crate::Robot::initialize());
+            ROBOT.call_once(|| ($crate::Robot::initialize(), $crate::ContextWrapper::new()));
         }
 
         #[no_mangle]
-        unsafe extern "C" fn opcontrol() {
-            $crate::Robot::opcontrol(ROBOT.get_mut().unwrap());
+        extern "C" fn opcontrol() {
+            let (robot, wrapper) = ROBOT.get().unwrap();
+            $crate::Task::spawn_ext(
+                "opcontrol",
+                $crate::Task::DEFAULT_PRIORITY,
+                $crate::Task::DEFAULT_STACK_DEPTH,
+                move || $crate::Robot::opcontrol(robot, wrapper.replace()),
+            );
         }
 
         #[no_mangle]
-        unsafe extern "C" fn autonomous() {
-            $crate::Robot::autonomous(ROBOT.get_mut().unwrap());
+        extern "C" fn autonomous() {
+            let (robot, wrapper) = ROBOT.get().unwrap();
+            $crate::Task::spawn_ext(
+                "autonomous",
+                $crate::Task::DEFAULT_PRIORITY,
+                $crate::Task::DEFAULT_STACK_DEPTH,
+                move || $crate::Robot::autonomous(robot, wrapper.replace()),
+            );
         }
 
         #[no_mangle]
-        unsafe extern "C" fn disabled() {
-            $crate::Robot::disable(ROBOT.get_mut().unwrap());
+        extern "C" fn disabled() {
+            let (robot, wrapper) = ROBOT.get().unwrap();
+            $crate::Task::spawn_ext(
+                "disabled",
+                $crate::Task::DEFAULT_PRIORITY,
+                $crate::Task::DEFAULT_STACK_DEPTH,
+                move || $crate::Robot::disabled(robot, wrapper.replace()),
+            );
         }
     };
 }

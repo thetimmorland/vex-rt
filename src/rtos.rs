@@ -1,17 +1,28 @@
 use alloc::boxed::Box;
 use alloc::format;
 use alloc::string::String;
-use core::ptr::null_mut;
-use core::time::Duration;
+use core::fmt::{Debug, Display, Formatter};
+use core::{cell::UnsafeCell, fmt};
+use core::{ops::Deref, time::Duration};
+use core::{ops::DerefMut, ptr::null_mut};
 
-use crate::bindings;
-use crate::error::*;
-use crate::util::*;
+use crate::{
+    bindings,
+    error::*,
+    util::{
+        owner::Owner,
+        shared_set::{insert, SharedSet, SharedSetHandle},
+        *,
+    },
+};
+
+const TIMEOUT_MAX: u32 = 0xffffffff;
 
 pub fn time_since_start() -> Duration {
     unsafe { Duration::from_millis(bindings::millis().into()) }
 }
 
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct Task(bindings::task_t);
 
 impl Task {
@@ -88,7 +99,152 @@ impl Task {
     pub fn name(&self) -> String {
         unsafe { from_cstring_raw(bindings::task_get_name(self.0)) }
     }
+
+    pub fn priority(&self) -> u32 {
+        unsafe { bindings::task_get_priority(self.0) }
+    }
 }
+
+impl Debug for Task {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Task")
+            .field("name", &self.name())
+            .field("priority", &self.priority())
+            .finish()
+    }
+}
+
+unsafe impl Send for Task {}
+
+unsafe impl Sync for Task {}
+
+pub struct Mutex<T: ?Sized> {
+    mutex: bindings::mutex_t,
+    data: UnsafeCell<T>,
+}
+
+unsafe impl<T: ?Sized + Send> Send for Mutex<T> {}
+
+unsafe impl<T: ?Sized + Sync> Sync for Mutex<T> {}
+
+impl<T> Mutex<T> {
+    pub fn new(data: T) -> Self {
+        Self::try_new(data).unwrap_or_else(|err| panic!("failed to create mutex: {:?}", err))
+    }
+
+    pub fn try_new(data: T) -> Result<Self, Error> {
+        let mutex = unsafe { bindings::mutex_create() };
+        if mutex != null_mut() {
+            Ok(Self {
+                data: UnsafeCell::new(data),
+                mutex,
+            })
+        } else {
+            Err(from_errno())
+        }
+    }
+}
+
+impl<T: ?Sized> Mutex<T> {
+    pub fn lock<'a>(&'a self) -> MutexGuard<'a, T> {
+        self.try_lock()
+            .unwrap_or_else(|err| panic!("Failed to lock mutex: {:?}", err))
+    }
+
+    pub fn try_lock<'a>(&'a self) -> Result<MutexGuard<'a, T>, Error> {
+        if unsafe { bindings::mutex_take(self.mutex, TIMEOUT_MAX) } {
+            Ok(MutexGuard(self))
+        } else {
+            Err(from_errno())
+        }
+    }
+
+    pub fn poll<'a>(&'a self) -> Option<MutexGuard<'a, T>> {
+        if unsafe { bindings::mutex_take(self.mutex, 0) } {
+            Some(MutexGuard(self))
+        } else {
+            None
+        }
+    }
+}
+
+impl<T: ?Sized> Drop for Mutex<T> {
+    fn drop(&mut self) {
+        unsafe { bindings::mutex_delete(self.mutex) }
+    }
+}
+
+impl<T: ?Sized + Debug> Debug for Mutex<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        match self.poll() {
+            Some(guard) => f.debug_struct("Mutex").field("data", &&*guard).finish(),
+            None => {
+                struct LockedPlaceholder;
+                impl Debug for LockedPlaceholder {
+                    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+                        f.write_str("<locked>")
+                    }
+                }
+
+                f.debug_struct("Mutex")
+                    .field("data", &LockedPlaceholder)
+                    .finish()
+            }
+        }
+    }
+}
+
+impl<T: ?Sized + Default> Default for Mutex<T> {
+    fn default() -> Self {
+        Self::new(Default::default())
+    }
+}
+
+impl<T> From<T> for Mutex<T> {
+    fn from(data: T) -> Self {
+        Self::new(data)
+    }
+}
+
+pub struct MutexGuard<'a, T: ?Sized>(&'a Mutex<T>);
+
+impl<T: ?Sized> Deref for MutexGuard<'_, T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*self.0.data.get() }
+    }
+}
+
+impl<T: ?Sized> DerefMut for MutexGuard<'_, T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe { &mut *self.0.data.get() }
+    }
+}
+
+impl<T: ?Sized> Drop for MutexGuard<'_, T> {
+    fn drop(&mut self) {
+        if !unsafe { bindings::mutex_give(self.0.mutex) } {
+            panic!("failed to return mutex: {:?}", from_errno());
+        }
+    }
+}
+
+impl<T: ?Sized + Debug> Debug for MutexGuard<'_, T> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        Debug::fmt(&**self, f)
+    }
+}
+
+impl<T: ?Sized + Display> Display for MutexGuard<'_, T> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        (**self).fmt(f)
+    }
+}
+
+impl<T: ?Sized> !Send for MutexGuard<'_, T> {}
+
+unsafe impl<T: ?Sized + Sync> Sync for MutexGuard<'_, T> {}
 
 pub struct Loop {
     last_time: u32,
@@ -106,4 +262,160 @@ impl Loop {
     pub fn delay(&mut self) {
         unsafe { bindings::task_delay_until(&mut self.last_time, self.delta) }
     }
+
+    pub fn next<'a>(&'a mut self) -> impl Selectable + 'a {
+        struct LoopSelect<'a>(&'a mut Loop);
+
+        impl<'a> Selectable for LoopSelect<'a> {
+            fn poll(self) -> Result<(), Self> {
+                if unsafe { bindings::millis() } >= self.0.last_time + self.0.delta {
+                    self.0.last_time += self.0.delta;
+                    Ok(())
+                } else {
+                    Err(self)
+                }
+            }
+            fn sleep(&self) -> GenericSleep {
+                GenericSleep::Timestamp(Duration::from_millis(
+                    (self.0.last_time + self.0.delta).into(),
+                ))
+            }
+        }
+
+        LoopSelect(self)
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub enum GenericSleep {
+    NotifyTake(Option<Duration>),
+    Timestamp(Duration),
+}
+
+impl GenericSleep {
+    pub fn sleep(self) -> u32 {
+        match self {
+            GenericSleep::NotifyTake(timeout) => {
+                let timeout = timeout.map_or(TIMEOUT_MAX, |v| {
+                    v.checked_sub(time_since_start())
+                        .map_or(0, |d| d.as_millis() as u32)
+                });
+                unsafe { bindings::task_notify_take(true, timeout) }
+            }
+            GenericSleep::Timestamp(v) => {
+                if let Some(d) = v.checked_sub(time_since_start()) {
+                    Task::delay(d)
+                }
+                0
+            }
+        }
+    }
+
+    pub fn timeout(self) -> Option<Duration> {
+        match self {
+            GenericSleep::NotifyTake(v) => v,
+            GenericSleep::Timestamp(v) => Some(v),
+        }
+    }
+}
+
+impl core::ops::BitOr for GenericSleep {
+    type Output = Self;
+    fn bitor(self, rhs: Self) -> Self {
+        match (self, rhs) {
+            (GenericSleep::Timestamp(a), GenericSleep::Timestamp(b)) => {
+                GenericSleep::Timestamp(core::cmp::min(a, b))
+            }
+            (a, b) => GenericSleep::NotifyTake(a.timeout().map_or(b.timeout(), |a| {
+                Some(b.timeout().map_or(a, |b| core::cmp::min(a, b)))
+            })),
+        }
+    }
+}
+
+pub trait Selectable<T = ()>: Sized {
+    fn poll(self) -> Result<T, Self>;
+    fn sleep(&self) -> GenericSleep;
+}
+
+#[macro_export]
+macro_rules! select_head {
+    ($event:expr,) => {$event};
+    ($event:expr, $($rest:expr,)+) => {($event, select_head!($($rest,)*))}
+}
+
+#[macro_export]
+macro_rules! select_match {
+    { $event:expr; $cons:expr; $_:expr, } => {
+        match $crate::Selectable::poll($event) {
+            ::core::result::Result::Ok(r) => break $cons(r),
+            ::core::result::Result::Err(s) => s,
+        }
+    };
+    { $events:expr; $cons:expr; $_:expr, $($rest:expr,)+ } => {
+        match $crate::Selectable::poll($events.0) {
+            ::core::result::Result::Ok(r) => break $cons(::core::result::Result::Ok(r)),
+            ::core::result::Result::Err(s) => (s, select_match!{$events.1; |r| $cons(::core::result::Result::Err(r)); $($rest,)*}),
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! select_body {
+    { $result:expr; $var:pat => $body:expr, } => {
+        match $result {
+            $var => $body,
+        }
+    };
+    { $result:expr; $var:pat => $body:expr, $($vars:pat => $bodys:expr,)+ } => {
+        match $result {
+            ::core::result::Result::Ok($var) => $body,
+            ::core::result::Result::Err(r) => select_body!{r; $($vars => $bodys,)*},
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! select_sleep {
+    ($events:expr; $_:expr,) => {$events.sleep()};
+    ($events:expr; $_:expr, $($rest:expr,)+) => {$events.0.sleep() | select_sleep!($events.1; $($rest,)+)};
+}
+
+#[macro_export]
+macro_rules! select {
+    { $( $var:pat = $event:expr => $body:expr ),+ $(,)? } => {{
+        let mut events = $crate::select_head!($($event,)+);
+        select_body!{loop {
+            events = $crate::select_match!{events; |r| r; $($event,)+};
+            $crate::select_sleep!(events; $($event,)+).sleep();
+        }; $($var => $body,)+}
+    }};
+}
+
+pub struct Event(SharedSet<Task>);
+
+impl Event {
+    pub fn new() -> Self {
+        Event(SharedSet::new())
+    }
+
+    pub fn notify(&self) {
+        for t in self.0.iter() {
+            unsafe { bindings::task_notify(t.0) };
+        }
+    }
+}
+
+pub struct EventHandle<O: Owner<Event>>(Option<SharedSetHandle<Task, EventHandleOwner<O>>>);
+
+struct EventHandleOwner<O: Owner<Event>>(O);
+
+impl<O: Owner<Event>> Owner<SharedSet<Task>> for EventHandleOwner<O> {
+    fn with<U>(&self, f: impl FnOnce(&mut SharedSet<Task>) -> U) -> Option<U> {
+        self.0.with(|e| f(&mut e.0))
+    }
+}
+
+pub fn handle_event<O: Owner<Event>>(owner: O) -> EventHandle<O> {
+    EventHandle(insert(EventHandleOwner(owner), Task::current()))
 }

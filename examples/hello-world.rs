@@ -2,7 +2,7 @@
 #![no_main]
 
 use libc_print::std_name::println;
-use vex_rt::{entry, Robot};
+use vex_rt::{entry, Context, Robot};
 
 struct HelloBot;
 
@@ -11,13 +11,13 @@ impl Robot for HelloBot {
         println!("initialize");
         HelloBot
     }
-    fn autonomous(&mut self) {
+    fn autonomous(&self, _: Context) {
         println!("autonomous");
     }
-    fn opcontrol(&mut self) {
+    fn opcontrol(&self, _: Context) {
         println!("opcontrol");
     }
-    fn disable(&mut self) {
+    fn disabled(&self, _: Context) {
         println!("disabled");
     }
 }

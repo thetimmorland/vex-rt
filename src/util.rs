@@ -5,6 +5,10 @@ use alloc::format;
 use alloc::string::*;
 use rcstring::CString;
 
+pub mod ord_weak;
+pub mod owner;
+pub mod shared_set;
+
 #[inline]
 pub fn as_cstring<V, T, F>(v: V, f: F) -> Result<T, Error>
 where
