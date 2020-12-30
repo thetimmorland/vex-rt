@@ -1,7 +1,4 @@
-use core::{
-    alloc::{GlobalAlloc, Layout},
-    ptr::null_mut,
-};
+use core::alloc::{GlobalAlloc, Layout};
 use libc;
 
 struct Alloc;
