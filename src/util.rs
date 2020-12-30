@@ -5,7 +5,7 @@ use alloc::format;
 use alloc::string::*;
 use rcstring::CString;
 
-pub mod ord_arc;
+pub mod ord_weak;
 pub mod owner;
 pub mod shared_set;
 

@@ -4,7 +4,7 @@ use core::{cmp::min, time::Duration};
 use crate::{
     time_since_start,
     util::{
-        ord_arc::OrdArc,
+        ord_weak::OrdWeak,
         owner::Owner,
         shared_set::{insert, SharedSet, SharedSetHandle},
     },
@@ -42,7 +42,7 @@ impl Context {
         };
         let parent_handle = insert(
             ContextHandle(Arc::downgrade(&self.data)),
-            (&ctx.data).into(),
+            Arc::downgrade(&ctx.data).into(),
         );
         if parent_handle.is_some() {
             *ctx.data.lock() = Some(ContextData {
@@ -94,9 +94,9 @@ impl Context {
 }
 
 struct ContextData {
-    _parent: Option<SharedSetHandle<OrdArc<ContextMutex>, ContextHandle>>,
+    _parent: Option<SharedSetHandle<OrdWeak<ContextMutex>, ContextHandle>>,
     event: Event,
-    children: SharedSet<OrdArc<ContextMutex>>,
+    children: SharedSet<OrdWeak<ContextMutex>>,
 }
 
 impl ContextData {
@@ -122,8 +122,8 @@ impl Owner<Event> for ContextHandle {
     }
 }
 
-impl Owner<SharedSet<OrdArc<ContextMutex>>> for ContextHandle {
-    fn with<U>(&self, f: impl FnOnce(&mut SharedSet<OrdArc<ContextMutex>>) -> U) -> Option<U> {
+impl Owner<SharedSet<OrdWeak<ContextMutex>>> for ContextHandle {
+    fn with<U>(&self, f: impl FnOnce(&mut SharedSet<OrdWeak<ContextMutex>>) -> U) -> Option<U> {
         Some(f(&mut self.0.upgrade()?.as_ref().lock().as_mut()?.children))
     }
 }
