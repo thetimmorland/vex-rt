@@ -25,10 +25,6 @@ pub fn time_since_start() -> Duration {
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct Task(bindings::task_t);
 
-unsafe impl Send for Task {}
-
-unsafe impl Sync for Task {}
-
 impl Task {
     pub const DEFAULT_PRIORITY: u32 = bindings::TASK_PRIORITY_DEFAULT;
     pub const DEFAULT_STACK_DEPTH: u16 = bindings::TASK_STACK_DEPTH_DEFAULT as u16;
@@ -103,7 +99,24 @@ impl Task {
     pub fn name(&self) -> String {
         unsafe { from_cstring_raw(bindings::task_get_name(self.0)) }
     }
+
+    pub fn priority(&self) -> u32 {
+        unsafe { bindings::task_get_priority(self.0) }
+    }
 }
+
+impl Debug for Task {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Task")
+            .field("name", &self.name())
+            .field("priority", &self.priority())
+            .finish()
+    }
+}
+
+unsafe impl Send for Task {}
+
+unsafe impl Sync for Task {}
 
 pub struct Mutex<T: ?Sized> {
     mutex: bindings::mutex_t,
@@ -273,7 +286,7 @@ impl Loop {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum GenericSleep {
     NotifyTake(Option<Duration>),
     Timestamp(Duration),
