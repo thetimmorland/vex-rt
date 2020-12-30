@@ -1,6 +1,6 @@
-///! For use with the select macro
-use crate::context::Context;
-use crate::rtos::Mutex;
+//! For use with the select macro
+
+use crate::rtos::{Context, Mutex};
 
 /// A trait representing a competition-ready VEX Robot.
 pub trait Robot {

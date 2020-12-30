@@ -14,7 +14,6 @@ mod bindings;
 mod error;
 mod util;
 
-pub mod context;
 pub mod io;
 pub mod macros;
 pub mod motor;

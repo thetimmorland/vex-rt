@@ -1,12 +1,11 @@
-//! Context
-
 use alloc::sync::{Arc, Weak};
 use core::{cmp::min, time::Duration};
 
-use crate::util::{insert, OrdWeak, Owner, SharedSet, SharedSetHandle};
-
-use crate::rtos::{
-    handle_event, time_since_start, Event, EventHandle, GenericSleep, Mutex, Selectable,
+use super::{handle_event, time_since_start, Event, EventHandle, GenericSleep, Mutex, Selectable};
+use crate::util::{
+    ord_weak::OrdWeak,
+    owner::Owner,
+    shared_set::{insert, SharedSet, SharedSetHandle},
 };
 
 type ContextMutex = Mutex<Option<ContextData>>;
@@ -139,6 +138,22 @@ impl Drop for ContextData {
 
 struct ContextHandle(Weak<ContextMutex>);
 
+impl Owner<Event> for ContextHandle {
+    fn with<U>(&self, f: impl FnOnce(&mut Event) -> U) -> Option<U> {
+        Some(f(&mut self.0.upgrade()?.as_ref().lock().as_mut()?.event))
+    }
+}
+
+impl Owner<SharedSet<OrdWeak<ContextMutex>>> for ContextHandle {
+    fn with<U>(&self, f: impl FnOnce(&mut SharedSet<OrdWeak<ContextMutex>>) -> U) -> Option<U> {
+        Some(f(&mut self.0.upgrade()?.as_ref().lock().as_mut()?.children))
+    }
+}
+
+fn cancel(m: &Mutex<Option<ContextData>>) {
+    m.lock().take();
+}
+
 #[doc(hidden)]
 pub struct ContextWrapper(Mutex<Option<Context>>);
 
@@ -158,20 +173,4 @@ impl ContextWrapper {
         *opt = Some(ctx.clone());
         ctx
     }
-}
-
-impl Owner<Event> for ContextHandle {
-    fn with<U>(&self, f: impl FnOnce(&mut Event) -> U) -> Option<U> {
-        Some(f(&mut self.0.upgrade()?.as_ref().lock().as_mut()?.event))
-    }
-}
-
-impl Owner<SharedSet<OrdWeak<ContextMutex>>> for ContextHandle {
-    fn with<U>(&self, f: impl FnOnce(&mut SharedSet<OrdWeak<ContextMutex>>) -> U) -> Option<U> {
-        Some(f(&mut self.0.upgrade()?.as_ref().lock().as_mut()?.children))
-    }
-}
-
-fn cancel(m: &Mutex<Option<ContextData>>) {
-    m.lock().take();
 }
