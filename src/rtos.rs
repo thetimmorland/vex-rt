@@ -289,8 +289,7 @@ impl Loop {
         }
     }
 
-    /// Delays until the next loop cycle, updating the internal state
-    /// accordingly.
+    /// Delays until the next loop cycle.
     pub fn delay(&mut self) {
         unsafe { bindings::task_delay_until(&mut self.last_time, self.delta) }
     }
