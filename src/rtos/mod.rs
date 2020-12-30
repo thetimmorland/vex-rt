@@ -3,6 +3,7 @@
 use alloc::{boxed::Box, format, string::String};
 use core::{
     fmt::{self, Debug, Formatter},
+    marker::PhantomData,
     ptr::null_mut,
     time::Duration,
 };
@@ -194,6 +195,41 @@ pub trait Selectable<T = ()>: Sized {
     fn poll(self) -> Result<T, Self>;
     /// Gets the earliest time that the event could be ready.
     fn sleep(&self) -> GenericSleep;
+}
+
+/// Creates a new [`Selectable`] event by mapping the result of a given one.
+#[inline]
+pub fn select_map<'a, T: 'a, U: 'a, F: 'a + FnOnce(T) -> U>(
+    event: impl Selectable<T> + 'a,
+    f: F,
+) -> impl Selectable<U> + 'a {
+    struct MapSelect<T, U, E: Selectable<T>, F: FnOnce(T) -> U> {
+        event: E,
+        f: F,
+        _t: PhantomData<T>,
+    }
+
+    impl<T, U, E: Selectable<T>, F: FnOnce(T) -> U> Selectable<U> for MapSelect<T, U, E, F> {
+        fn poll(self) -> Result<U, Self> {
+            match self.event.poll() {
+                Ok(r) => Ok((self.f)(r)),
+                Err(event) => Err(Self {
+                    event,
+                    f: self.f,
+                    _t: PhantomData,
+                }),
+            }
+        }
+        fn sleep(&self) -> GenericSleep {
+            self.event.sleep()
+        }
+    }
+
+    MapSelect {
+        event,
+        f,
+        _t: PhantomData,
+    }
 }
 
 mod context;
