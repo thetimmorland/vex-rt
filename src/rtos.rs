@@ -425,7 +425,7 @@ macro_rules! select_body {
 #[doc(hidden)]
 macro_rules! select_sleep {
     ($events:expr; $_:expr,) => {$events.sleep()};
-    ($events:expr; $_:expr, $($rest:expr,)+) => {$events.0.sleep() | select_sleep!($events.1; $($rest,)+)};
+    ($events:expr; $_:expr, $($rest:expr,)+) => {$events.0.sleep().combine(select_sleep!($events.1; $($rest,)+))};
 }
 
 #[macro_export]
