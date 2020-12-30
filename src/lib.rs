@@ -29,6 +29,7 @@ pub use peripherals::*;
 pub use rtos::*;
 pub use smart_port::*;
 
+#[doc(hidden)]
 pub use spin::once;
 
 #[panic_handler]
