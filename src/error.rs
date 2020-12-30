@@ -5,8 +5,14 @@ use rcstring;
 
 use crate::util::from_cstring_raw;
 
+/// Represents a runtime error.
 pub enum Error {
+    /// Represents a runtime error which comes from the underlying platform
+    /// (PROS, FreeRTOS, newlib, etc.). It wraps an `errno` value (i.e., system
+    /// error code).
     System(i32),
+    /// Represents a runtime error which comes from within Rust. It wraps an
+    /// error string.
     Custom(String),
 }
 
@@ -47,10 +53,13 @@ extern "C" {
     fn __errno() -> *mut i32;
 }
 
+/// Gets the value of `errno` for the current task.
 pub fn get_errno() -> libc::c_int {
     unsafe { *__errno() }
 }
 
+/// Generates an [`Error`] object from the value of `errno` for the current
+/// task.
 pub fn from_errno() -> Error {
     Error::System(get_errno())
 }
