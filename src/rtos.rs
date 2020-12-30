@@ -333,7 +333,9 @@ pub enum GenericSleep {
 }
 
 impl GenericSleep {
-    /// Sleeps until the future time respresented by `self`.
+    /// Sleeps until the future time respresented by `self`. The result is the
+    /// number of notifications which were present, if the sleep ended due to
+    /// notification.
     pub fn sleep(self) -> u32 {
         match self {
             GenericSleep::NotifyTake(timeout) => {
