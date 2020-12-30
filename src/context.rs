@@ -2,13 +2,13 @@ use alloc::sync::{Arc, Weak};
 use core::{cmp::min, time::Duration};
 
 use crate::{
-    time_since_start,
+    handle_event, time_since_start,
     util::{
         ord_weak::OrdWeak,
         owner::Owner,
         shared_set::{insert, SharedSet, SharedSetHandle},
     },
-    Event, GenericSleep, Mutex, Selectable,
+    Event, EventHandle, GenericSleep, Mutex, Selectable,
 };
 
 type ContextMutex = Mutex<Option<ContextData>>;
@@ -65,23 +65,21 @@ impl Context {
     }
 
     pub fn done<'a>(&'a self) -> impl Selectable + 'a {
-        struct ContextSelect<'a>(&'a Context);
+        struct ContextSelect<'a>(&'a Context, EventHandle<ContextHandle>);
 
         impl<'a> Selectable for ContextSelect<'a> {
             fn poll(self) -> Result<(), Self> {
                 let mut lock = self.0.data.lock();
                 let opt = &mut lock.as_mut();
-                match opt {
-                    Some(d) => {
-                        if self.0.deadline.map_or(false, |d| d <= time_since_start()) {
-                            d.cancel();
-                            *opt = None;
-                            Ok(())
-                        } else {
-                            Err(self)
-                        }
+                if opt.is_some() {
+                    if self.0.deadline.map_or(false, |v| v <= time_since_start()) {
+                        opt.take();
+                        Ok(())
+                    } else {
+                        Err(self)
                     }
-                    None => Ok(()),
+                } else {
+                    Ok(())
                 }
             }
             fn sleep(&self) -> GenericSleep {
@@ -89,7 +87,10 @@ impl Context {
             }
         }
 
-        ContextSelect(self)
+        ContextSelect(
+            self,
+            handle_event(ContextHandle(Arc::downgrade(&self.data))),
+        )
     }
 }
 
@@ -99,18 +100,12 @@ struct ContextData {
     children: SharedSet<OrdWeak<ContextMutex>>,
 }
 
-impl ContextData {
-    fn cancel(&self) {
-        self.event.notify();
-        for child in self.children.iter() {
-            cancel(child)
-        }
-    }
-}
-
 impl Drop for ContextData {
     fn drop(&mut self) {
-        self.cancel()
+        self.event.notify();
+        for child in self.children.iter() {
+            child.upgrade().map(|c| cancel(&c));
+        }
     }
 }
 
@@ -129,7 +124,5 @@ impl Owner<SharedSet<OrdWeak<ContextMutex>>> for ContextHandle {
 }
 
 fn cancel(m: &Mutex<Option<ContextData>>) {
-    if let Some(d) = m.lock().take() {
-        d.cancel();
-    }
+    m.lock().take();
 }
