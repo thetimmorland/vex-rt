@@ -1,3 +1,5 @@
+//! Error
+
 use alloc::format;
 use alloc::string::*;
 use core::fmt::{self, Debug, Display, Formatter};

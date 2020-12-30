@@ -1,14 +1,12 @@
+//! Context
+
 use alloc::sync::{Arc, Weak};
 use core::{cmp::min, time::Duration};
 
-use crate::{
-    handle_event, time_since_start,
-    util::{
-        ord_weak::OrdWeak,
-        owner::Owner,
-        shared_set::{insert, SharedSet, SharedSetHandle},
-    },
-    Event, EventHandle, GenericSleep, Mutex, Selectable,
+use crate::util::{insert, OrdWeak, Owner, SharedSet, SharedSetHandle};
+
+use crate::rtos::{
+    handle_event, time_since_start, Event, EventHandle, GenericSleep, Mutex, Selectable,
 };
 
 type ContextMutex = Mutex<Option<ContextData>>;
@@ -140,6 +138,27 @@ impl Drop for ContextData {
 }
 
 struct ContextHandle(Weak<ContextMutex>);
+
+#[doc(hidden)]
+pub struct ContextWrapper(Mutex<Option<Context>>);
+
+impl ContextWrapper {
+    #[doc(hidden)]
+    pub fn new() -> Self {
+        Self(Mutex::new(None))
+    }
+
+    #[doc(hidden)]
+    pub fn replace(&self) -> Context {
+        let mut opt = self.0.lock();
+        if let Some(ctx) = opt.take() {
+            ctx.cancel();
+        }
+        let ctx = Context::new_global();
+        *opt = Some(ctx.clone());
+        ctx
+    }
+}
 
 impl Owner<Event> for ContextHandle {
     fn with<U>(&self, f: impl FnOnce(&mut Event) -> U) -> Option<U> {

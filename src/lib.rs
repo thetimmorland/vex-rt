@@ -8,33 +8,28 @@
 extern crate alloc;
 
 use core::panic::PanicInfo;
-use libc_print::libc_eprintln;
 
 mod allocator;
 mod bindings;
-mod context;
-mod entry;
 mod error;
-mod motor;
-mod peripherals;
-mod rtos;
-mod smart_port;
 mod util;
 
-pub use context::*;
-pub use entry::*;
-pub use error::*;
-pub use motor::*;
-pub use peripherals::*;
-pub use rtos::*;
-pub use smart_port::*;
+pub mod context;
+pub mod io;
+pub mod macros;
+pub mod motor;
+pub mod peripherals;
+pub mod prelude;
+pub mod robot;
+pub mod rtos;
+pub mod smart_port;
 
 #[doc(hidden)]
 pub use spin::once;
 
 #[panic_handler]
 fn panic(panic_info: &PanicInfo) -> ! {
-    libc_eprintln!("panic occurred!: {:?}", panic_info);
+    crate::io::eprintln!("panic occurred!: {:?}", panic_info);
 
     unsafe {
         libc::exit(1);

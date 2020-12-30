@@ -1,3 +1,5 @@
+//! Allocator
+
 use core::alloc::{GlobalAlloc, Layout};
 use libc;
 

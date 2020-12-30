@@ -1,3 +1,5 @@
+//! Bindings.
+
 use crate::bindings;
 
 /// An enum which represents possible gear cartridges for a motor.
@@ -27,7 +29,7 @@ pub struct Motor {
 
 impl Motor {
     /// constructs a new motor unsafely. You probably want to use
-    /// [`crate::Peripherals::take()`] instead.
+    /// [`crate::peripherals::Peripherals::take()`] instead.
     pub unsafe fn new(port: u8, gearset: Gearset, reverse: bool) -> Motor {
         assert!((1..22).contains(&port));
         bindings::motor_set_gearing(port, gearset.to_motor_gearset_e_t());

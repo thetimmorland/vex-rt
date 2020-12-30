@@ -2,8 +2,9 @@
 #![no_main]
 
 use core::time::Duration;
-use libc_print::std_name::println;
-use vex_rt::{entry, Context, Loop, Robot, Task};
+
+use vex_rt::prelude::*;
+use vex_rt::rtos::{Loop, Task};
 
 struct TaskBot;
 
@@ -23,7 +24,8 @@ impl Robot for TaskBot {
                     l.delay()
                 }
             },
-        );
+        )
+        .unwrap();
         TaskBot
     }
     fn autonomous(&self, _: Context) {

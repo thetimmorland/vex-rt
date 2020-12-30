@@ -1,8 +1,7 @@
 #![no_std]
 #![no_main]
 
-use libc_print::std_name::println;
-use vex_rt::{entry, Context, Robot};
+use vex_rt::prelude::*;
 
 struct HelloBot;
 

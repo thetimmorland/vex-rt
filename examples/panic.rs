@@ -1,14 +1,13 @@
 #![no_std]
 #![no_main]
 
-use libc_print::std_name::println;
-use vex_rt::{entry, Context, Robot};
+use vex_rt::prelude::*;
 
 struct PanicBot;
 
 impl Robot for PanicBot {
     fn initialize() -> Self {
-        panic!("Bruh")
+        panic!("Panic Message")
     }
     fn autonomous(&self, _: Context) {}
     fn opcontrol(&self, _: Context) {}
