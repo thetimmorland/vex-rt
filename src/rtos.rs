@@ -320,9 +320,6 @@ impl Loop {
 
 #[derive(Copy, Clone, Debug)]
 /// Represents a future time to sleep until.
-///
-/// The bitwise OR operator `|` can be used to combine `GenericSleep` objects to
-/// get one which represents the earliest possible time of the two (or more).
 pub enum GenericSleep {
     /// Represents a future time when a notification occurs. If a timestamp is
     /// present, then it represents whichever is earlier.
@@ -360,12 +357,11 @@ impl GenericSleep {
             GenericSleep::Timestamp(v) => Some(v),
         }
     }
-}
 
-impl core::ops::BitOr for GenericSleep {
-    type Output = Self;
-    fn bitor(self, rhs: Self) -> Self {
-        match (self, rhs) {
+    /// Combine two `GenericSleep` objects to one which represents the earliest
+    /// possible time of the two.
+    pub fn combine(self, other: Self) -> Self {
+        match (self, other) {
             (GenericSleep::Timestamp(a), GenericSleep::Timestamp(b)) => {
                 GenericSleep::Timestamp(core::cmp::min(a, b))
             }
