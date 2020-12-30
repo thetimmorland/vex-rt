@@ -20,12 +20,12 @@ type ContextMutex = Mutex<Option<ContextData>>;
 /// # Concepts
 ///
 /// Contexts have a few important concepts: "cancellation", "parent" and
-/// "deadline". A context can be cancelled by calling its [`cancel()`] method;
-/// this notifies any tasks which are waiting on its [`done()`] event. It is
-/// also cancelled automatically if and when its parent context is cancelled,
-/// and when the last copy of it goes out of scope. A "deadline" allows a
-/// context to be automatically cancelled at a certain timestamp; this is
-/// implemented without creating extra tasks/threads.
+/// "deadline". A context can be cancelled by calling its [`Context::cancel()`]
+/// method; this notifies any tasks which are waiting on its [`Context::done()`]
+/// event. It is also cancelled automatically if and when its parent context is
+/// cancelled, and when the last copy of it goes out of scope. A "deadline"
+/// allows a context to be automatically cancelled at a certain timestamp; this
+/// is implemented without creating extra tasks/threads.
 ///
 /// # Forking
 ///
@@ -75,23 +75,23 @@ impl Context {
         ctx
     }
 
-    /// Forks a context. Equivalent to [`fork`], except that the new context has
-    /// a deadline which is the earlier of the one in `self` and the one
-    /// provided.
+    /// Forks a context. Equivalent to [`Context::fork()`], except that the new
+    /// context has a deadline which is the earlier of the one in `self` and
+    /// the one provided.
     pub fn fork_with_deadline(&self, deadline: Duration) -> Self {
         let mut ctx = self.fork();
         ctx.deadline = Some(ctx.deadline.map_or(deadline, |d| min(d, deadline)));
         ctx
     }
 
-    /// Forks a context. Equivalent to [`fork_with_deadline`], except that the
-    /// deadline is calculated from the current time and the provided timeout
-    /// duration.
+    /// Forks a context. Equivalent to [`Context::fork_with_deadline()`], except
+    /// that the deadline is calculated from the current time and the
+    /// provided timeout duration.
     pub fn fork_with_timeout(&self, timeout: Duration) -> Self {
         self.fork_with_deadline(time_since_start() + timeout)
     }
 
-    /// A [`crate::Selectable`] event which occurs when the context is
+    /// A [`Selectable`] event which occurs when the context is
     /// cancelled. The sleep amount takes the context deadline into
     /// consideration.
     pub fn done<'a>(&'a self) -> impl Selectable + 'a {

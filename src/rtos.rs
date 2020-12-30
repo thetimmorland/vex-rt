@@ -145,7 +145,7 @@ unsafe impl<T: ?Sized + Sync> Sync for Mutex<T> {}
 
 impl<T> Mutex<T> {
     /// Creates a new mutex which wraps the given object. Panics on failure; see
-    /// [`try_new`].
+    /// [`Mutex::try_new()`].
     pub fn new(data: T) -> Self {
         Self::try_new(data).unwrap_or_else(|err| panic!("failed to create mutex: {:?}", err))
     }
@@ -167,7 +167,7 @@ impl<T> Mutex<T> {
 impl<T: ?Sized> Mutex<T> {
     /// Obtains a [`MutexGuard`] giving access to the object protected by the
     /// mutex. Blocks until access can be obtained. Panics on failure; see
-    /// [`try_lock`].
+    /// [`Mutex::try_lock()`].
     pub fn lock<'a>(&'a self) -> MutexGuard<'a, T> {
         self.try_lock()
             .unwrap_or_else(|err| panic!("Failed to lock mutex: {:?}", err))
