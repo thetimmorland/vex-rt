@@ -13,13 +13,16 @@ pub trait Robot {
     fn disabled(&self, ctx: Context);
 }
 
+#[doc(hidden)]
 pub struct ContextWrapper(Mutex<Option<Context>>);
 
 impl ContextWrapper {
+    #[doc(hidden)]
     pub fn new() -> Self {
         Self(Mutex::new(None))
     }
 
+    #[doc(hidden)]
     pub fn replace(&self) -> Context {
         let mut opt = self.0.lock();
         if let Some(ctx) = opt.take() {
