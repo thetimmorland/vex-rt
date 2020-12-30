@@ -44,11 +44,13 @@ impl Context {
         )))
     }
 
+    #[inline]
     /// Cancels a context. This is a no-op if the context is already cancelled.
     pub fn cancel(&self) {
         cancel(&self.0.as_ref().1);
     }
 
+    #[inline]
     /// Forks a context. The new context's parent is `self`.
     pub fn fork(&self) -> Self {
         self.fork_internal(self.0 .0)
@@ -61,6 +63,7 @@ impl Context {
         self.fork_internal(Some(self.0 .0.map_or(deadline, |d| min(d, deadline))))
     }
 
+    #[inline]
     /// Forks a context. Equivalent to [`Context::fork_with_deadline()`], except
     /// that the deadline is calculated from the current time and the
     /// provided timeout duration.
@@ -150,6 +153,7 @@ impl Owner<SharedSet<OrdWeak<ContextValue>>> for ContextHandle {
     }
 }
 
+#[inline]
 fn cancel(m: &Mutex<Option<ContextData>>) {
     m.lock().take();
 }

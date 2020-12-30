@@ -25,6 +25,7 @@ impl From<rcstring::Error> for Error {
 }
 
 impl<T> From<Error> for Result<T, Error> {
+    #[inline]
     fn from(err: Error) -> Self {
         Err(err)
     }
@@ -56,12 +57,14 @@ extern "C" {
 }
 
 /// Gets the value of `errno` for the current task.
+#[inline]
 pub fn get_errno() -> libc::c_int {
     unsafe { *__errno() }
 }
 
 /// Generates an [`Error`] object from the value of `errno` for the current
 /// task.
+#[inline]
 pub fn from_errno() -> Error {
     Error::System(get_errno())
 }

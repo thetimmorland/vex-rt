@@ -8,6 +8,7 @@ use crate::{
 pub struct Event(SharedSet<Task>);
 
 impl Event {
+    #[inline]
     /// Creates a new event structure with an empty set of tasks.
     pub fn new() -> Self {
         Event(SharedSet::new())
@@ -28,11 +29,13 @@ pub struct EventHandle<O: Owner<Event>>(Option<SharedSetHandle<Task, EventHandle
 struct EventHandleOwner<O: Owner<Event>>(O);
 
 impl<O: Owner<Event>> Owner<SharedSet<Task>> for EventHandleOwner<O> {
+    #[inline]
     fn with<U>(&self, f: impl FnOnce(&mut SharedSet<Task>) -> U) -> Option<U> {
         self.0.with(|e| f(&mut e.0))
     }
 }
 
+#[inline]
 /// Adds the current task to the notification set for an [`Event`], acquiring an
 /// [`EventHandle`] to manage the lifetime of that entry.
 pub fn handle_event<O: Owner<Event>>(owner: O) -> EventHandle<O> {

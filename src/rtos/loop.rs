@@ -12,6 +12,7 @@ pub struct Loop {
 }
 
 impl Loop {
+    #[inline]
     /// Creates a new loop object with a given period.
     pub fn new(delta: Duration) -> Self {
         Loop {
@@ -20,11 +21,13 @@ impl Loop {
         }
     }
 
+    #[inline]
     /// Delays until the next loop cycle.
     pub fn delay(&mut self) {
         unsafe { bindings::task_delay_until(&mut self.last_time, self.delta) }
     }
 
+    #[inline]
     /// A [`Selectable`] event which occurs at the next loop cycle.
     pub fn next<'a>(&'a mut self) -> impl Selectable + 'a {
         struct LoopSelect<'a>(&'a mut Loop);

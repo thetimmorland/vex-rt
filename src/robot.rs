@@ -20,6 +20,7 @@ pub struct ContextWrapper(Mutex<Option<Context>>);
 
 impl ContextWrapper {
     #[doc(hidden)]
+    #[inline]
     pub fn new() -> Self {
         Self(Mutex::new(None))
     }

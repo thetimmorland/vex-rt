@@ -5,10 +5,12 @@ use crate::util::owner::Owner;
 pub struct SharedSet<T: Ord + Clone>(BTreeSet<T>);
 
 impl<T: Ord + Clone> SharedSet<T> {
+    #[inline]
     pub fn new() -> Self {
         Self(BTreeSet::new())
     }
 
+    #[inline]
     pub fn iter(&self) -> Iter<T> {
         self.0.iter()
     }
@@ -28,6 +30,7 @@ pub struct SharedSetHandle<T: Ord + Clone, O: Owner<SharedSet<T>>> {
 }
 
 impl<T: Ord + Clone, O: Owner<SharedSet<T>>> Drop for SharedSetHandle<T, O> {
+    #[inline]
     fn drop(&mut self) {
         self.owner.with(|set| set.0.remove(&self.value));
     }

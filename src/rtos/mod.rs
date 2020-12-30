@@ -28,6 +28,7 @@ impl Task {
     /// The default stack depth for new tasks.
     pub const DEFAULT_STACK_DEPTH: u16 = bindings::TASK_STACK_DEPTH_DEFAULT as u16;
 
+    #[inline]
     /// Delays the current task by the specified duration.
     pub fn delay(dur: Duration) {
         unsafe {
@@ -35,6 +36,7 @@ impl Task {
         }
     }
 
+    #[inline]
     /// Gets the current task.
     pub fn current() -> Task {
         Task(unsafe { bindings::task_get_current() })
@@ -52,6 +54,7 @@ impl Task {
         }
     }
 
+    #[inline]
     /// Spawns a new task with no name and the default priority and stack depth.
     pub fn spawn<F>(f: F) -> Result<Task, Error>
     where
@@ -83,6 +86,7 @@ impl Task {
         }
     }
 
+    #[inline]
     /// Spawns a new task from a C function pointer and an arbitrary data
     /// pointer.
     pub unsafe fn spawn_raw(
@@ -102,11 +106,13 @@ impl Task {
         })
     }
 
+    #[inline]
     /// Gets the name of the task.
     pub fn name(&self) -> String {
         unsafe { from_cstring_raw(bindings::task_get_name(self.0)) }
     }
 
+    #[inline]
     /// Gets the priority of the task.
     pub fn priority(&self) -> u32 {
         unsafe { bindings::task_get_priority(self.0) }
@@ -158,6 +164,7 @@ impl GenericSleep {
         }
     }
 
+    #[inline]
     /// Get the timestamp represented by `self`, if it is present.
     pub fn timeout(self) -> Option<Duration> {
         match self {
