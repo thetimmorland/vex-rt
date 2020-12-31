@@ -1,4 +1,4 @@
-//! For use with the select macro
+//! For use with the [`entry`] macro.
 
 use crate::rtos::{Context, Mutex};
 
