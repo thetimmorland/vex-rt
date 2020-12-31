@@ -13,8 +13,8 @@ test:cargo:
   script:
     - rustc --version && cargo --version  # Print version info for debugging
     - cargo fmt -- --check
-    - cargo check --verbose
-    - cargo check --examples --verbose
+    - cargo build
+    - cargo build --examples
   cache:
     paths:
       - .cargo
