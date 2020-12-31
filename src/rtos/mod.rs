@@ -118,6 +118,21 @@ impl Task {
     pub fn priority(&self) -> u32 {
         unsafe { bindings::task_get_priority(self.0) }
     }
+
+    #[inline]
+    /// Gets the state of the task.
+    pub fn state(&self) -> TaskState {
+        match unsafe { bindings::task_get_state(self.0) } {
+            bindings::task_state_e_t::E_TASK_STATE_RUNNING => TaskState::Running,
+            bindings::task_state_e_t::E_TASK_STATE_READY => TaskState::Ready,
+            bindings::task_state_e_t::E_TASK_STATE_BLOCKED => TaskState::Blocked,
+            bindings::task_state_e_t::E_TASK_STATE_SUSPENDED => TaskState::Suspended,
+            bindings::task_state_e_t::E_TASK_STATE_DELETED => TaskState::Deleted,
+            bindings::task_state_e_t::E_TASK_STATE_INVALID => {
+                panic!("invalid task handle: {:#010x}", self.0 as usize)
+            }
+        }
+    }
 }
 
 impl Debug for Task {
@@ -132,6 +147,20 @@ impl Debug for Task {
 unsafe impl Send for Task {}
 
 unsafe impl Sync for Task {}
+
+/// Represents the state of a [`Task`].
+pub enum TaskState {
+    /// The task is actively executing.
+    Running,
+    /// The task exists and is available to run, but is not currently running.
+    Ready,
+    /// The task is delayed or blocked by a mutex, semaphore or I/O operation.
+    Blocked,
+    /// The task is suspended.
+    Suspended,
+    /// The task has been deleted.
+    Deleted,
+}
 
 #[derive(Copy, Clone, Debug)]
 /// Represents a future time to sleep until.
