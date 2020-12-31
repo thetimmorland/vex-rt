@@ -1,4 +1,4 @@
-image: "rust:nightly"
+image: "rustlang/rust:nightly"
 
 variables:
   CARGO_HOME: $CI_PROJECT_DIR/.cargo
