@@ -6,7 +6,7 @@ variables:
 
 before_script:
     - apt-get update -yqq
-    - apt-get install -yqq --no-install-recommends build-essential
+    - apt-get install -yqq --no-install-recommends libclang-dev
     - apt-get install -yqq --no-install-recommends gcc-arm-none-eabi
 
 test:cargo:
