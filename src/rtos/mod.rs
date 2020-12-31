@@ -133,6 +133,16 @@ impl Task {
             }
         }
     }
+
+    #[inline]
+    /// Unsafely deletes the task.
+    ///
+    /// This is unsafe because it does not guarantee that the task's code safely
+    /// unwinds (i.e., that destructors are called, memory is freed and other
+    /// resources are released).
+    pub unsafe fn delete(&self) {
+        bindings::task_delete(self.0)
+    }
 }
 
 impl Debug for Task {
