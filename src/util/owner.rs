@@ -4,6 +4,7 @@ pub trait Owner<T> {
     fn with<U>(&self, f: impl FnOnce(&mut T) -> U) -> Option<U>;
 }
 
+#[inline]
 #[allow(dead_code)]
 pub fn map<'a, T: 'a, U: 'a>(
     owner: &'a impl Owner<T>,

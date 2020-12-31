@@ -27,7 +27,7 @@
 /// ```
 macro_rules! entry {
     ($robot_type:ty) => {
-        static ROBOT: $crate::once::Once<($robot_type, $crate::context::ContextWrapper)> =
+        static ROBOT: $crate::once::Once<($robot_type, $crate::robot::ContextWrapper)> =
             $crate::once::Once::new();
 
         #[no_mangle]
@@ -35,7 +35,7 @@ macro_rules! entry {
             ROBOT.call_once(|| {
                 (
                     <$robot_type>::initialize(),
-                    $crate::context::ContextWrapper::new(),
+                    $crate::robot::ContextWrapper::new(),
                 )
             });
         }

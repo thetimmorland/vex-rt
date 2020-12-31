@@ -1,15 +1,14 @@
-//! Context
-
 use alloc::sync::{Arc, Weak};
 use core::{cmp::min, time::Duration};
 
-use crate::util::{insert, OrdWeak, Owner, SharedSet, SharedSetHandle};
-
-use crate::rtos::{
-    handle_event, time_since_start, Event, EventHandle, GenericSleep, Mutex, Selectable,
+use super::{handle_event, time_since_start, Event, EventHandle, GenericSleep, Mutex, Selectable};
+use crate::util::{
+    ord_weak::OrdWeak,
+    owner::Owner,
+    shared_set::{insert, SharedSet, SharedSetHandle},
 };
 
-type ContextMutex = Mutex<Option<ContextData>>;
+type ContextValue = (Option<Duration>, Mutex<Option<ContextData>>);
 
 #[derive(Clone)]
 /// Represents an ongoing operation which could be cancelled in the future.
@@ -29,59 +28,42 @@ type ContextMutex = Mutex<Option<ContextData>>;
 ///
 /// A context can be "forked", which creates a new child context. This new
 /// context can optionally be created with a deadline.
-pub struct Context {
-    deadline: Option<Duration>,
-    data: Arc<ContextMutex>,
-}
+pub struct Context(Arc<ContextValue>);
 
 impl Context {
     /// Creates a new global context (i.e., one which has no parent or
     /// deadline).
     pub fn new_global() -> Self {
-        Self {
-            deadline: None,
-            data: Arc::new(Mutex::new(Some(ContextData {
+        Self(Arc::new((
+            None,
+            Mutex::new(Some(ContextData {
                 _parent: None,
                 event: Event::new(),
                 children: SharedSet::new(),
-            }))),
-        }
+            })),
+        )))
     }
 
+    #[inline]
     /// Cancels a context. This is a no-op if the context is already cancelled.
     pub fn cancel(&self) {
-        cancel(self.data.as_ref());
+        cancel(&self.0.as_ref().1);
     }
 
+    #[inline]
     /// Forks a context. The new context's parent is `self`.
     pub fn fork(&self) -> Self {
-        let ctx = Context {
-            deadline: self.deadline,
-            data: Arc::new(Mutex::new(None)),
-        };
-        let parent_handle = insert(
-            ContextHandle(Arc::downgrade(&self.data)),
-            Arc::downgrade(&ctx.data).into(),
-        );
-        if parent_handle.is_some() {
-            *ctx.data.lock() = Some(ContextData {
-                _parent: parent_handle,
-                event: Event::new(),
-                children: SharedSet::new(),
-            });
-        }
-        ctx
+        self.fork_internal(self.0 .0)
     }
 
     /// Forks a context. Equivalent to [`Context::fork()`], except that the new
     /// context has a deadline which is the earlier of the one in `self` and
     /// the one provided.
     pub fn fork_with_deadline(&self, deadline: Duration) -> Self {
-        let mut ctx = self.fork();
-        ctx.deadline = Some(ctx.deadline.map_or(deadline, |d| min(d, deadline)));
-        ctx
+        self.fork_internal(Some(self.0 .0.map_or(deadline, |d| min(d, deadline))))
     }
 
+    #[inline]
     /// Forks a context. Equivalent to [`Context::fork_with_deadline()`], except
     /// that the deadline is calculated from the current time and the
     /// provided timeout duration.
@@ -97,10 +79,10 @@ impl Context {
 
         impl<'a> Selectable for ContextSelect<'a> {
             fn poll(self) -> Result<(), Self> {
-                let mut lock = self.0.data.lock();
+                let mut lock = self.0 .0 .1.lock();
                 let opt = &mut lock.as_mut();
                 if opt.is_some() {
-                    if self.0.deadline.map_or(false, |v| v <= time_since_start()) {
+                    if self.0 .0 .0.map_or(false, |v| v <= time_since_start()) {
                         opt.take();
                         Ok(())
                     } else {
@@ -111,67 +93,67 @@ impl Context {
                 }
             }
             fn sleep(&self) -> GenericSleep {
-                GenericSleep::NotifyTake(self.0.deadline)
+                GenericSleep::NotifyTake(self.0 .0 .0)
             }
         }
 
-        ContextSelect(
-            self,
-            handle_event(ContextHandle(Arc::downgrade(&self.data))),
-        )
+        ContextSelect(self, handle_event(ContextHandle(Arc::downgrade(&self.0))))
+    }
+
+    fn fork_internal(&self, deadline: Option<Duration>) -> Self {
+        let ctx = Self(Arc::new((deadline, Mutex::new(None))));
+        let parent_handle = insert(
+            ContextHandle(Arc::downgrade(&self.0)),
+            Arc::downgrade(&ctx.0).into(),
+        );
+        if parent_handle.is_some() {
+            *ctx.0 .1.lock() = Some(ContextData {
+                _parent: parent_handle,
+                event: Event::new(),
+                children: SharedSet::new(),
+            });
+        }
+        ctx
     }
 }
 
 struct ContextData {
-    _parent: Option<SharedSetHandle<OrdWeak<ContextMutex>, ContextHandle>>,
+    _parent: Option<SharedSetHandle<OrdWeak<ContextValue>, ContextHandle>>,
     event: Event,
-    children: SharedSet<OrdWeak<ContextMutex>>,
+    children: SharedSet<OrdWeak<ContextValue>>,
 }
 
 impl Drop for ContextData {
     fn drop(&mut self) {
         self.event.notify();
         for child in self.children.iter() {
-            child.upgrade().map(|c| cancel(&c));
+            child.upgrade().map(|c| cancel(&c.1));
         }
     }
 }
 
-struct ContextHandle(Weak<ContextMutex>);
-
-#[doc(hidden)]
-pub struct ContextWrapper(Mutex<Option<Context>>);
-
-impl ContextWrapper {
-    #[doc(hidden)]
-    pub fn new() -> Self {
-        Self(Mutex::new(None))
-    }
-
-    #[doc(hidden)]
-    pub fn replace(&self) -> Context {
-        let mut opt = self.0.lock();
-        if let Some(ctx) = opt.take() {
-            ctx.cancel();
-        }
-        let ctx = Context::new_global();
-        *opt = Some(ctx.clone());
-        ctx
-    }
-}
+struct ContextHandle(Weak<ContextValue>);
 
 impl Owner<Event> for ContextHandle {
     fn with<U>(&self, f: impl FnOnce(&mut Event) -> U) -> Option<U> {
-        Some(f(&mut self.0.upgrade()?.as_ref().lock().as_mut()?.event))
+        Some(f(&mut self.0.upgrade()?.as_ref().1.lock().as_mut()?.event))
     }
 }
 
-impl Owner<SharedSet<OrdWeak<ContextMutex>>> for ContextHandle {
-    fn with<U>(&self, f: impl FnOnce(&mut SharedSet<OrdWeak<ContextMutex>>) -> U) -> Option<U> {
-        Some(f(&mut self.0.upgrade()?.as_ref().lock().as_mut()?.children))
+impl Owner<SharedSet<OrdWeak<ContextValue>>> for ContextHandle {
+    fn with<U>(&self, f: impl FnOnce(&mut SharedSet<OrdWeak<ContextValue>>) -> U) -> Option<U> {
+        Some(f(&mut self
+            .0
+            .upgrade()?
+            .as_ref()
+            .1
+            .lock()
+            .as_mut()?
+            .children))
     }
 }
 
+#[inline]
 fn cancel(m: &Mutex<Option<ContextData>>) {
     m.lock().take();
 }
