@@ -232,6 +232,37 @@ pub fn select_map<'a, T: 'a, U: 'a, F: 'a + FnOnce(T) -> U>(
     }
 }
 
+/// Creates a new [`Selectable`] event which processes exactly one of the given
+/// events.
+#[inline]
+pub fn select_either<'a, T: 'a>(
+    fst: impl Selectable<T> + 'a,
+    snd: impl Selectable<T> + 'a,
+) -> impl Selectable<T> + 'a {
+    struct EitherSelect<T, E1: Selectable<T>, E2: Selectable<T>>(E1, E2, PhantomData<T>);
+
+    impl<T, E1: Selectable<T>, E2: Selectable<T>> Selectable<T> for EitherSelect<T, E1, E2> {
+        fn poll(self) -> Result<T, Self> {
+            Err(Self(
+                match self.0.poll() {
+                    Ok(r) => return Ok(r),
+                    Err(e) => e,
+                },
+                match self.1.poll() {
+                    Ok(r) => return Ok(r),
+                    Err(e) => e,
+                },
+                PhantomData,
+            ))
+        }
+        fn sleep(&self) -> GenericSleep {
+            self.0.sleep().combine(self.1.sleep())
+        }
+    }
+
+    EitherSelect(fst, snd, PhantomData)
+}
+
 mod context;
 mod event;
 mod r#loop;
