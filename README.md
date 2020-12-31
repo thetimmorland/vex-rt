@@ -1,3 +1,5 @@
+# Repo moved to: https://gitlab.com/qvex/vex-rt.
+
 # vex-rt
 
 [![](https://img.shields.io/crates/v/vex-rt)](https://crates.io/crates/vex-rt)
