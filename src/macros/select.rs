@@ -26,11 +26,10 @@
 /// ```
 macro_rules! select {
     { $( $var:pat = $event:expr => $body:expr ),+ $(,)? } => {{
-        use vex_rt::rtos::Selectable;
         let mut events = $crate::select_head!($($event,)+);
         $crate::select_body!{loop {
-            events = $crate::select_match!{events; |r| r; $($event,)+};
             $crate::rtos::GenericSleep::sleep($crate::select_sleep!(events; $($event,)+));
+            events = $crate::select_match!{events; |r| r; $($event,)+};
         }; $($var => $body,)+}
     }};
 }
