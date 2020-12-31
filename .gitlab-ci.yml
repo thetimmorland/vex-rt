@@ -4,9 +4,9 @@ variables:
   CARGO_HOME: $CI_PROJECT_DIR/.cargo
   DEBIAN_FRONTEND: noninteractive
 
-#   - apt-get install -yqq --no-install-recommends build-essential
 before_script:
     - apt-get update -yqq
+    - apt-get install -yqq --no-install-recommends build-essential
     - apt-get install -yqq --no-install-recommends gcc-arm-none-eabi
 
 test:cargo:
