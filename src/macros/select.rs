@@ -85,3 +85,29 @@ macro_rules! select_sleep {
         $crate::rtos::Selectable::sleep(&$events.0).combine($crate::select_sleep!($events.1; $($rest,)+))
     };
 }
+
+#[macro_export]
+/// Generates a future event (i.e. one which implements
+/// [`crate::rtos::Selectable`]) from a similar recipe as the [`select`]
+/// macro, combining the behaviour of [`crate::rtos::select_map`] and
+/// [`select_any`].
+///
+/// There is one important difference to note between this macro and [`select`]:
+/// since this macro needs to generate an object containing the event processing
+/// recipe, the body expressions are placed inside lambdas, and therefore
+/// contextual expressions such as `break`, `continue` and `return` are not
+/// valid.
+macro_rules! select_merge {
+    { $( $var:pat = $event:expr => $body:expr ),+ $(,)? } => {
+        $crate::select_any!($($crate::rtos::select_map($event, |$var| $body)),+)
+    };
+}
+
+#[macro_export]
+/// Generates a future event (i.e. one which implements
+/// [`crate::rtos::Selectable`]) from a set of events which all have the same
+/// result type, by repeated application of [`crate::rtos::select_either`].
+macro_rules! select_any {
+    ($event:expr $(,)?) => {$event};
+    ($event:expr, $($rest:expr),+ $(,)?) => {$crate::rtos::select_either($event, $crate::select_any!($($rest),+))};
+}
